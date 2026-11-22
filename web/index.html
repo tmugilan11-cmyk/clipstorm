@@ -604,6 +604,43 @@ button.tile:hover,button.tile:focus-visible{background:var(--brand-soft);border-
 .danger-card{border-color:#F3C9C4}
 .danger-card h2{color:var(--bad)}
 .clip-foot{display:flex;gap:4px;align-items:center;margin-top:auto;padding-top:8px}
+/* Clip card: one padding, a two-line hook, one clamped reason, then three equal actions */
+.clip-body{padding:14px;gap:6px}
+.clip .hook{font-size:14px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.clip .why{font-size:12px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clip .ttl{-webkit-line-clamp:1}
+.clip-acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:auto;padding-top:8px}
+.clip-acts .btn{height:32px;padding:0 6px;justify-content:center;min-width:0;font-size:12px}
+.clip-acts .btn svg{flex:none}
+.clip-acts .btn.pq{background:var(--brand-soft);color:var(--brand);border-color:var(--brand-soft)}
+.clip-acts .btn.pq:hover{background:var(--brand);color:var(--brand-ink)}
+.clip-acts+.clip-foot{margin-top:0;padding-top:2px}
+@media (max-width:420px){.clip-acts .lbl{display:none}}
+.job-prog{margin:4px 0 16px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r);background:var(--muted)}
+.jp-stage{display:flex;justify-content:space-between;gap:10px;margin:0 0 10px;font-size:14px;color:var(--text)}
+.jp-stage span{color:var(--brand);font-weight:700}
+.job-prog .bar{height:8px}
+.job-prog .sub{margin:8px 0 0}
+/* Home: the link box is the centre of the page; recent work next; counters quieter below */
+.hero{padding-top:72px;padding-bottom:64px}
+.composer.big .composer-input input,.composer.big .composer-input input:focus{height:52px;font-size:16px}
+.composer.big .composer-bar{padding:4px 10px 10px 12px}
+.composer.big .composer-bar .btn.primary{height:52px;padding:0 26px;font-size:16px;border-radius:var(--r)}
+.ov-line{text-align:center;margin:-36px auto 32px;max-width:760px;font-size:13px}
+#ov{max-width:1100px;margin:0 auto}
+.ov-recent .rp-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.rp{display:flex;gap:12px;align-items:center;text-align:left;padding:10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);cursor:pointer;min-width:0;transition:background-color .15s ease,border-color .15s ease}
+.rp:hover,.rp:focus-visible{background:var(--brand-soft);border-color:var(--brand-soft)}
+.rp-pic{flex:none;width:72px;aspect-ratio:16/9;border-radius:var(--r-sm);overflow:hidden;background:var(--muted);display:grid;place-items:center;color:var(--faint)}
+.rp-pic img{width:100%;height:100%;object-fit:cover;display:block}
+.rp-tx{min-width:0;display:flex;flex-direction:column;gap:5px;align-items:flex-start;flex:1}
+.rp-tx b{font-size:13px;font-weight:600;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rp-tx .bar{width:100%;height:4px}
+.tiles.ov-quiet{margin-top:8px;gap:12px}
+.ov-quiet .tile{padding:12px 14px}
+.ov-quiet .tile b{font-size:20px}
+.ov-quiet .tile em{display:none}
+@media (max-width:700px){.hero{padding-top:40px;padding-bottom:48px}.ov-line{margin:-28px auto 24px}.ov-recent .rp-list{grid-template-columns:1fr}.tiles.ov-quiet{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* ---------- live */
 .livecard{background:var(--bg);border:1px solid #4A2226;border-radius:var(--r);padding:20px;margin-bottom:28px}
@@ -1915,18 +1952,18 @@ function clipHtml(j, c) {
   const key = `c:${j.id}:${c.id}`, busyClip = c.status === "queued" || c.status === "rendering";
   return `<article class="clip ${sel().has(key) ? "picked" : ""}">
     <button class="shot" data-act="openclip" ${a} aria-label="Open clip: ${esc(c.title || c.hook)}">${body}
-      <span class="badge l ${scoreCls(c.score)}" title="Virality score: ${c.score || 0} out of 100" aria-label="Virality score ${c.score || 0} out of 100">${c.score ? c.score + "/100" : "Hand"}</span><span class="badge r">${fmt(c.end - c.start)}</span></button>
+      <span class="badge l ${scoreCls(c.score)}" title="Virality score" aria-label="Virality score ${c.score || 0} out of 100">${c.score ? c.score + "/100" : "Hand"}</span><span class="badge r">${fmt(c.end - c.start)}</span></button>
     <div class="clip-body">
-      <div class="hook">${esc(c.hook || "Untitled clip")}</div>
-      <div class="ttl">${esc(c.title)}</div>
+      <div class="hook" title="${esc(c.hook || "")}">${esc(c.hook || "Untitled clip")}</div>
+      ${c.reason ? `<div class="why" title="${esc("Why it was picked: " + c.reason)}">${esc(c.reason)}</div>` : ""}
+      ${c.title && c.title !== c.hook ? `<div class="ttl">${esc(c.title)}</div>` : ""}
       ${postPills(c) ? `<div class="row" style="gap:4px">${postPills(c)}</div>` : ""}
+      ${c.status === "done" ? `<div class="clip-acts"><button class="btn sm pq" data-act="openclip" ${a}>${ic("sliders")}Edit</button><a class="btn sm" href="${m}${esc(c.file)}?download=1" title="Download" aria-label="Download">${ic("down")}<span class="lbl">Download</span></a><button class="btn sm" data-act="openclip" ${a}>${ic("send")}Post</button></div>` : ""}
       <div class="clip-foot">
         ${busyClip ? "" : `<label class="selck" title="Select this clip"><input type="checkbox" data-sel="${key}" ${sel().has(key) ? "checked" : ""} aria-label="Select this clip"></label>`}
-        ${c.status === "done" ? `<a class="btn sm icon ghost" href="${m}${esc(c.file)}?download=1" title="Download" aria-label="Download">${ic("down")}</a>` : ""}
+        <span class="grow"></span>
         <button class="btn sm icon ghost" data-act="copy" ${a} title="Copy post text" aria-label="Copy post text">${ic("copy")}</button>
         ${busyClip ? "" : `<button class="btn sm icon ghost" data-act="delclip" ${a} title="Delete this clip" aria-label="Delete this clip">${ic("trash")}</button>`}
-        <span class="grow"></span>
-        ${c.status === "done" ? `<button class="btn sm" data-act="openclip" ${a}>${ic("sliders")}Edit</button><button class="btn sm" data-act="openclip" ${a}>${ic("send")}Post</button>` : ""}
       </div>
     </div></article>`;
 }
@@ -1981,7 +2018,7 @@ function jobHtml(j) {
         ${j.clips.some(c => c.status === "done") ? `<button class="btn sm icon ghost" data-act="dlall" data-j="${j.id}" title="Download all clips of this video" aria-label="Download all clips of this video">${ic("down")}</button>` : ""}
         <button class="btn sm icon ghost" data-act="deljob" data-j="${j.id}" title="Delete" aria-label="Delete this video and its clips">${ic("trash")}</button>
         <label class="selck" title="Select this video and its clips"><input type="checkbox" data-sel="j:${j.id}" ${sel().has("j:" + j.id) ? "checked" : ""} aria-label="Select this video"></label>`}</div></div>
-    ${busy ? `<div class="bar"><i style="width:${Math.round(j.progress * 100)}%"></i></div><p class="sub">${esc(j.stage)} · ${pct}%${esc(heard)}</p>` : ""}
+    ${busy ? `<div class="job-prog"><p class="jp-stage"><b>${esc(j.stage || (j.status === "queued" ? "Waiting its turn" : "Working"))}</b><span>${pct}%</span></p><div class="bar"><i style="width:${pct}%"></i></div>${heard ? `<p class="sub">${esc(heard.replace(/^ · /, ""))}</p>` : ""}</div>` : ""}
     ${j.status === "done" && !j.clips.length ? `<p class="sub">${esc(j.stage)}</p>` : ""}
     ${j.error ? `<div class="err">${esc(j.error)}<button class="rep" data-act="report" data-ctx="${esc("Video failed: " + (j.title || j.source.name || "") + " | " + j.error)}">Report this</button></div>` : ""}${j.ai?.note ? `<p class="sub">${esc(j.ai.note)}</p>` : ""}
     ${j.clips.length ? `<div class="grid">${j.clips.map(c => clipHtml(j, c)).join("")}</div>` : ""}`;
@@ -2176,11 +2213,20 @@ function drawOverview() {
   const pst = p => p.status === "posted" ? `<span class="pill ok">Posted</span>` : p.status === "failed" ? `<span class="pill bad">Failed</span>` : p.status === "posting" ? `<span class="pill warn">Posting now</span>` : `<span class="pill warn">${clock(p.due_at)}</span>`;
   const steps = nextSteps(o);
   const tile = (icon, n, label, hint, to, extra) => `<button type="button" class="tile" data-act="go" data-v="${to}" title="${esc(hint)}"><i>${ic(icon)}</i><b>${n}</b><span>${label}${extra || ""}</span><em>${esc(hint)}</em></button>`;
-  put(box, `<p class="sub" style="text-align:center;margin:0 0 14px">Clipstorm finds the best moments, adds captions and makes 9:16 shorts, each with a virality score out of 100.</p><div class="how" aria-label="How Clipstorm works"><div class="steps across">
+  // Recent projects come from the list Projects already loaded; nothing extra is fetched for them.
+  const recent = (S.jobs || []).slice(0, 4).map(j => {
+    const busy = j.status === "queued" || j.status === "running", n = (j.clips || []).length;
+    const st = j.error ? `<span class="pill bad">Failed</span>` : j.status === "live" ? `<span class="pill live"><span class="dot"></span>Live</span>`
+      : busy ? `<span class="pill warn">${j.status === "queued" ? "Waiting its turn" : esc(j.stage || "Working")}</span>` : n ? `<span class="pill ok">${n} ${n === 1 ? "clip" : "clips"}</span>` : `<span class="pill">No clips</span>`;
+    return `<button type="button" class="rp" data-act="go" data-v="library" title="Open Projects"><span class="rp-pic">${j.thumb ? `<img src="/media/${esc(j.id)}/thumb.jpg" alt="" loading="lazy">` : ic("film")}</span>
+      <span class="rp-tx"><b>${esc(j.title || j.source?.name || "Untitled video")}</b>${st}${busy ? `<span class="bar"><i style="width:${Math.round((j.progress || 0) * 100)}%"></i></span>` : ""}</span></button>`;
+  }).join("");
+  put(box, `<p class="sub ov-line">Best moments, captions and a virality score out of 100 for every short.</p><div class="how" aria-label="How Clipstorm works"><div class="steps across">
       <button class="step" data-act="step" data-to="focusurl"><span class="n">1</span><span><b>Paste a link or upload a video</b><span class="d">Use the box above. A YouTube, Twitch or Kick link works.</span></span>${ic("arrowr")}</button>
       <button class="step" data-act="step" data-to="go:library"><span class="n">2</span><span><b>Clipstorm finds the best moments and makes shorts</b><span class="d">Watch the progress in Projects.</span></span>${ic("arrowr")}</button>
       <button class="step" data-act="step" data-to="go:review"><span class="n">3</span><span><b>Review them and post</b><span class="d">Approve the ones you like, then post them.</span></span>${ic("arrowr")}</button></div></div>
-    <div class="tiles">
+    ${recent ? `<div class="card ov-recent"><div class="card-head"><div><h2>Recent projects</h2></div><button class="btn sm ghost" data-act="go" data-v="library">See all${ic("arrowr")}</button></div><div class="rp-list">${recent}</div></div>` : ""}
+    <div class="tiles ov-quiet">
       ${tile("radio", o.recording, "Streams recording now", "Open Projects to watch them", "library")}
       ${tile("scissors", sum("clips_today"), "Clips made today", "Open Projects to see them", "library")}
       ${tile("send", sum("posted_today"), "Posted today", "Clips that went out today", "library")}

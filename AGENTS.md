@@ -204,3 +204,16 @@ clip (pictures, clip type) use `crf 17`. In the stacked layout the top panel is 
 **One Audio page, and sound editing starts from a clip.** The sidebar has one audio row (the `sounds` page: sound
 library + music). "Edit audio" is the button in the clip editor's Sound tab; the audio editor has no sidebar row and
 shows a pointer to My videos when opened without a clip. Pictures are put on a clip from the editor's Look tab.
+
+**A finished YouTube video brings its audience with it.** `studio/signals.py` reads YouTube's own "most replayed"
+graph, the timestamped comments and the chapters through yt-dlp (no key), keeps them a day, and `jobs.py` hands the
+judge the part that falls inside each block (`brain.find_clips(context_for=...)` -> `judge.pick(context=...)`). It
+is evidence of what landed, never a rule. Live streams have no such data. Checked by `tests/test_signals.py`.
+
+**Installing on a new Windows PC is two double-clicks.** `setup.bat` runs `setup.ps1`: Python 3.12 and ffmpeg through
+winget when missing, a private `.venv`, the libraries one by one if the whole list will not install, `.env` from
+the example. `start.bat` starts the server on port 8765 and opens the page. The repository is
+`tmugilan11-cmyk/clipstorm` (private); `data/`, `.env`, `.pctest/` and the bulky reference material under
+`docs/research/` are never published (`.gitignore`).
+
+**One recording makes at most `MAX_LIVE_CLIPS` (100) by itself**, however high "clips per hour" is set.

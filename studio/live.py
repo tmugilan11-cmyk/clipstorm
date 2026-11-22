@@ -33,6 +33,7 @@ FRAG_WORKERS = 16         # stream fragments downloaded at once
 FRAG_AHEAD = 8            # pieces whose fragments are downloading ahead of the one being written
 RW_TIMEOUT = 15           # seconds a read from the stream may hang before ffmpeg gives up on it
 CATCHUP_AI = 600          # seconds the listening may run ahead of the AI while it catches up
+MAX_LIVE_CLIPS = int(config.env("PEAKCUT_MAX_LIVE_CLIPS", "100"))   # the most clips one recording makes by itself
 
 
 class NotLive(Exception):
@@ -1048,6 +1049,9 @@ class Session:
         if len(win) < 8:
             self.skipped += 1
             return self._verdict(verdict, "Skipped: nobody talking")
+        if len(self.job["clips"]) >= MAX_LIVE_CLIPS:
+            self.skipped += 1
+            return self._verdict(verdict, f"Skipped: this recording has made its {MAX_LIVE_CLIPS} clips")
         if len(recent) >= st["live_per_hour"] and not must:
             self.skipped += 1
             return self._verdict(verdict, f"Skipped: {st['live_per_hour']} clips this hour already")

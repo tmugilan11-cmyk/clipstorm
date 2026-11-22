@@ -1,0 +1,12 @@
+# analytics-table
+
+**What I built.** A real table in `#an_table`, the Content tab. One row per video: thumbnail, title, then Views, Watch time (hours), Avg view duration (min:sec), Avg viewed (%), Impressions, Click-through (%), Likes, Comments, Shares, Subscribers gained. Every header is a button that sorts, and a second click flips the direction; the sorted column goes bold with a caret and an `aria-sort` attribute. A search box filters by title as you type. Above the table sit the count ("12 videos") and a date range picker. Numbers are right-aligned with units in the header only. A video that did not report a number shows a dash with a tooltip explaining why; Shorts get the specific Shorts wording for impressions and click-through. It reads `GET /api/analytics/videos?from=&to=`, follows the page range from `window.PeakCutAnalytics` when one is set, keeps answers in a cache so a re-sort costs no request, and shows a sentence with a "Try again" button when the route fails. Empty state: "No videos in this range yet."
+
+**File I own.** `web/feat/analytics-table.js`, 259 lines. I touched nothing else.
+
+**Command and what it printed.**
+- `node --check web/feat/analytics-table.js` then `wc -l` printed `NODE_CHECK_OK` and `259 web/feat/analytics-table.js`.
+- `python tests/test_feat_files.py` printed `{"files": 24, "checks": 198}` and `All checks passed.` (exit 0). My rows all ok: parses, one plug-in, named after itself, only owner of `analytics-table`, does not write into index.html, escapes what it draws, no absolute origin, no clashing id.
+- `python tests/test_menu_pages.py` printed `All checks passed. 53 ok` (exit 0).
+
+**What I could not do.** The route `GET /api/analytics/videos` does not exist yet (wave 2 agent 4 builds it), so the table has only been exercised against its loading and failure paths, never with real rows. `#an_table` is also not created by any current file: the Analytics shell that owns the tab strip is another agent's work. Until that shell draws the box, this file finds nothing to fill and does not paint, which is by design. I did not create either the box or the route, because neither file was mine to write. The exact JSON shape was unknown, so the reader accepts `{videos}`, `{rows}`, `{items}`, or a bare array, plus several spellings per field and an optional `units` block that says whether watch time is in minutes or seconds and whether percentages are fractions.

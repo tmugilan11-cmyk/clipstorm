@@ -1,0 +1,44 @@
+# Audit: API transcribe/ai area (speech-to-text settings, AI provider settings, sync, status)
+
+Auditor: agent-153, QA swarm audit wave. Skill loaded first: systematic-debugging.
+Rules followed: docs/qa/CONTRACT.md (measured findings only, no browser, one owner per file).
+
+## Files owned
+
+- `studio/server.py` (2005 lines) - the route halves this audit covers: `/api/transcribe` GET/PUT, `/api/transcribe/models`, `/api/transcribe/test` (`:1483-1602`), `/api/ai` GET/PUT, `/api/ai/models`, `/api/ai/test` (`:1409-1452`), `/api/sync` (`:814-823` + gate fast path `:218-223`), `/api/status` (`:647-655`), and `_tr_public` (`:1483-1495`)
+- `studio/ai.py` (535 lines) - the AI provider table, key handling, `wire`/`where`/`ready`/`public`/`save`/`list_models`/`test`/`explain`/`_parse`/`_wrapped`
+- `studio/transcribe.py` (335 lines) - the LOGFARE settings module the transcribe routes save and reload (`:45-60`), the cloud call (`:119-145`), and the readiness checks (`model_ready :213-215`, `ready :218-223`)
+
+Cross-checked read-only (owned by other agents in this wave): `web/index.html` (every frontend caller of these routes) and `studio/fetch_model.py` (the file-existence check behind `model_ready`).
+
+## Every check run
+
+1. Read `docs/qa/CONTRACT.md`; loaded the `systematic-debugging` skill before starting.
+2. Read all three owned files in full, plus `studio/fetch_model.py` (`ready`, `:18-23`) and every frontend caller of these routes in `web/index.html` (settings AI tab `:2542-2557`, Transcribe tab `:2558-2574`, `trHints`/`aiHints` `:2284-2293`/`:2243-2251`, `trLoadModels` `:2297-2324`, `aiLoadModels` `:2336-2361`, `aisave`/`aitest` `:3114-3129`, `trsave`/`trtest` `:3146-3164`, sync tick `:2979-2998`, status poll `:3500`, upload guard `:1656-1660`).
+3. Route wiring: `/api/ai*` and `/api/transcribe*` are all registered on the app in `studio/server.py`; the gate fast path for `/api/sync` (`:218-223`) answers `{"v": token}` with no thread, database, or disk work when the client's `v` matches.
+4. Live curl of every owned route against 127.0.0.1:8798 with realistic input and with invalid input (bad provider ids, missing bodies, bad model characters, `forget_key` with no key, a custom provider with no address). No route answered 500 and nothing crashed.
+5. A real end-to-end AI test call and a real 1-second WAV transcription test were made against the live Logfare key (2 real AI calls, ~700 tokens) to prove the happy paths work with real services, not just mocks.
+6. Provider-switch test: `PUT /api/transcribe {"provider":"local"}` then `POST /api/transcribe/test` + `GET /api/transcribe` (see finding I2), immediately restored to `logfare`/`nova-3` and the restore was verified in the response body.
+7. Error-name audit on `/api/ai/models` and `/api/ai/test`: forced connect-fail, auth-fail, and not-running conditions against custom/openai/ollama providers and compared every message against the service actually being talked to (see finding I1).
+8. Frontend cross-check: every `[data-act]` handler the settings tabs register exists and reaches a real route; the transcribe save path only sends on-screen fields, so a hidden or blank key field cannot wipe the stored Logfare key (comment at `web/index.html:3150-3151`); the sync tick catches its own errors and keeps polling.
+
+## Findings
+
+| Severity | Where | What | Evidence | Fix |
+|---|---|---|---|---|
+| important | `studio/ai.py:276-288` (`explain`), reached from `list_models` `:222-257` via `/api/ai/models` (`studio/server.py:1429-1440`) | The "Find models" error names the WRONG service: it always says Logfare, because `explain()` builds its message from `where()`/`models()`, which read the CURRENT saved dashboard config, not the provider/address the request actually tested. This breaks the rule `ai.where()` itself documents ("a person who pointed PeakCut at their own server needs to see that address in an error"). | Live: `POST /api/ai/models {"provider":"custom","base_url":"http://127.0.0.1:9/v1","key":"x"}` → **502** "…PeakCut couldn't reach **Logfare**. Check the address and the internet connection." (nothing was sent to Logfare); `{"provider":"openai","key":"sk-bogus-openai-key-123"}` → **502** "…**Logfare** refused the key. Paste a working key under Settings, AI." (it was OpenAI that refused); `{"provider":"ollama"}` (Ollama not running) → **502** "…couldn't reach **Logfare**". A person who pastes their own address reads a message about a service they never chose, and the "under Settings, AI" pointer lands on the wrong key field. | Give `explain()` an optional `(provider_id, address)` override, and have `list_models`' error path pass the provider/address it actually used — `where()` already has the typed-address rule, it just never sees the request's own target. |
+| important | `studio/server.py:1489` (`_tr_public` ready), `:1576-1577` (`/api/transcribe/test` local branch) | Local transcription readiness is claimed without checking the model. The test route's local branch answers ok unconditionally, and `_tr_public` computes `ready = provider == "local" or (logfare and key)` — neither consults `transcribe.model_ready()` (`studio/transcribe.py:213-215` → `fetch_model.ready()`, a pure file-existence check that already exists). A green test and a green Ready pill on an install where every local transcription fails. | This install has no local ASR model downloaded (`data/models` holds only `argos/` and `speech-model.tar.bz2`), yet: `PUT /api/transcribe {"provider":"local"}` then `POST /api/transcribe/test` → **200** `{"ok":true,"mode":"local","note":"Local sherpa-onnx is always ready when the model is downloaded."}` — the note's own wording admits the caveat the route never tests; `GET /api/transcribe` meanwhile reports `"ready":true`. Every local transcription on this state fails with the model missing. (Settings switched for the test and restored to `logfare`/`nova-3`, verified.) | In the local branch of `/api/transcribe/test`, include `transcribe.model_ready()` in the answer and return the "model not downloaded yet" guidance when it is False; in `_tr_public`, make `ready` for a local provider require `model_ready()` too, so the pill matches reality. |
+| minor | `studio/ai.py:266` (`test`, `answer: str(out)[:80]`) | The AI test page shows a Python repr, not the answer: `str(out)` on a list gives `"['ok']"`. | Live: `POST /api/ai/test {}` → 200 `"answer":"['ok']"`. A person reads `['ok']` as the AI's words when it is Python spelling of a list. | Format the answer with `json.dumps(out, ensure_ascii=False)[:80]` (or stringify a scalar directly) so what the page shows is the answer text. |
+| minor | `web/index.html:3118-3128, :3146-3163` (Save/Test buttons), `studio/ai.py:523` (`ai.call` default timeout 180 s) | No visible progress during the AI test: the button is disabled but nothing says a test is running, and a slow provider can legally take up to 180 s. | Code read: both save/test handlers only set `disabled`; no "Testing…" state anywhere. Measured on this install: 5.3 s for Logfare — long enough to look hung; a slow provider can take 30× that. | Set the button text to "Testing…" (and restore it in the finally) while the request is in flight, so a slow provider looks busy rather than broken. |
+
+### Not bugs (checked and cleared)
+
+- **`max_upload_mb` reads 10000000** in `/api/status`: that is `config`'s "no limit" sentinel (`studio/config.py:173-178`), and the frontend falls back to 2048 and toasts "over the N MB limit" (`web/index.html:1656,1660`) — the value is effectively unreachable, not a broken control.
+- **`/api/sync` "failure"**: the fast path works; an earlier observed miss was an audit artifact (my own PUTs bumped the token between capture and replay). Same-token replay answers 18 bytes in ~2-4 ms with no thread/db/disk work.
+- **`POST /api/transcribe/models` with a bogus key answers 200**: by design — the model list is public and the key is optional (docstring says so; a wrong key only changes nothing).
+- **Keys**: `/api/ai` GET never sends the key — only `has_key` and a last-4 `key_hint` when the key is 12+ chars; the transcribe key file is written atomically with chmod 0600.
+- **Dead handlers**: none found on these routes; every frontend call has a real backend route.
+
+## Verdict
+
+Both settings areas work end to end with real services, and every invalid input answers with a plain-language 400/422 — the input gates here are among the cleanest in the app. The two important findings share one theme: **a message or flag is built from saved state instead of the request's own target** — error text names Logfare for every provider, and the local readiness flag skips the model check. Both fixes are small and local (`explain()` override; one `model_ready()` call), and the existing tests (`tests/test_ai_address.py`) already cover the rule finding I1 violates.

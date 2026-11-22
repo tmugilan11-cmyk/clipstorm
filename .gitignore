@@ -1,0 +1,53 @@
+# ---- never publish: settings, keys and anything users made
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+*service-account*.json
+*client_secret*.json
+data/
+storage.json
+*.db
+*.db-wal
+*.db-shm
+*.sqlite*
+*.log
+
+# ---- this computer only
+.claude/
+CLAUDE.local.md
+.vscode/
+.idea/
+*.bat
+Thumbs.db
+.DS_Store
+
+# ---- Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# ---- throwaway data folders the test files create
+tests/*-data/
+tests/tmpdata/
+tests/learnprobe/
+
+# ---- this install only: scratch work, logs, backups, and reference material too big to publish
+.pctest/
+var/
+--Frag*
+/peakcut/
+docs/research/opus-ui/
+docs/research/**/*.gif
+docs/research/**/*.mp4
+docs/research/**/*.webm
+docs/research/**/*.png
+docs/research/**/*.jpg
+*.bak
+*.bak[0-9]
+docs/research/*
+!docs/research/*.md

@@ -1,0 +1,3 @@
+M PLUS Rounded 1c is licensed under the SIL Open Font License, Version 1.1.
+Source: https://github.com/googlefonts/mplusrounded1c (and https://fonts.google.com/specimen/M+PLUS+Rounded+1c)
+Full licence text: see OFL-notosansjp.txt in this folder, which is the same OFL 1.1 text.

@@ -353,8 +353,8 @@ class Session:
         self.base = {}                # running averages the jumps are measured against, shown on the card
         self.spikes = 0
         self.game = ""                # which game this stream is, when it can be told
-        self.facecam_box = None       # where the webcam is, found once the first clip is made
-        self.facecam_checked = False  # the look is made once, even when it finds nothing
+        self.facecam_box = None       # where the webcam has been found most often
+        self.facecam_votes = {}       # (x, y, w, h) -> clips it was found in; each clip confirms it afresh
         self.ai_busy = 0.0            # when the AI check now running was started, 0 when none is
         self.seq0 = None              # the stream's first listed segment when this recording began
         self.tgt = 5.0                # seconds per stream piece, as the playlist says
@@ -380,6 +380,31 @@ class Session:
         self.ai_busy = now
         threading.Thread(target=ctx.bind(work), daemon=True, name="ai_check").start()
         return True
+
+    def _webcam_for(self, src):
+        """Where the webcam is in this clip's own picture, or None when it is not on screen.
+
+        A stream does not show its webcam the whole time: it opens with the camera filling the screen, cuts to
+        other scenes, comes back. Looking once, in the first clip, marked a whole five-hour stream as having
+        no webcam because its first clip was the intro, and all its clips were made without the streamer. So
+        every clip is checked. The place the webcam has been found most often is confirmed against this
+        clip's picture (its border must be there); only when it is not there is the picture searched afresh,
+        and a place found that way is used for this clip and remembered as a vote."""
+        try:
+            votes = self.facecam_votes
+            usual = max(votes, key=votes.get) if votes else None
+            if usual and facecam.still_there(src, usual):
+                return list(usual)
+            found = self._find_facecam(src)
+            if not found:
+                return None
+            key = tuple(int(v) for v in found)
+            votes[key] = votes.get(key, 0) + 1
+            self.facecam_box = list(max(votes, key=votes.get))
+            self.job["facecam"] = self.facecam_box
+            return list(key)
+        except Exception:  # noqa: BLE001 - no webcam is a layout, not a failure
+            return None
 
     def _find_facecam(self, src):
         """Where the webcam is in the stream, once. Only a sure answer is used.
@@ -816,6 +841,14 @@ class Session:
             keep_from = min(keep_from, max(self.judged_to - 90 - PAD - 30, reach))
             if self.ai_busy:
                 keep_from = min(keep_from, max(self.reading_from - PAD - 30, reach))
+            # ...nor while a clip that needs it is still waiting its turn to be made. A stream being caught up
+            # on is listened to thirty times faster than it played, so clips are chosen far faster than they can
+            # be rendered; on the first whole-stream run ten of forty-seven clips found their pieces already
+            # gone ("That part of the stream is no longer in the buffer").
+            waiting = [c.get("start", 0.0) for c in self.job["clips"]
+                       if c.get("status") in ("queued", "rendering") and not c.get("src")]
+            if waiting:
+                keep_from = min(keep_from, min(waiting) - PAD - 30)
             keep_from = max(keep_from, self.seg_clock - CATCHUP_KEEP)
             while self.segments and self.segments[0][2] < keep_from:
                 self.segments.pop(0)[0].unlink(missing_ok=True)
@@ -1196,14 +1229,11 @@ class Session:
             return
         finally:
             joined.unlink(missing_ok=True)
-        # The layouts that show the streamer need to know where the webcam is. It is looked for once per
-        # stream, in the first clip's own file.
+        # The layouts that show the streamer need to know where the webcam is in THIS clip.
         if clip.get("layout") in ("gameplay", "stack"):
-            if not self.facecam_checked:
-                self.facecam_box = self._find_facecam(src)
-                self.facecam_checked = True
-            if self.facecam_box:
-                clip["facecam"] = self.facecam_box
+            box = self._webcam_for(src)
+            if box:
+                clip["facecam"] = box
         # The words were heard in these very pieces, so the clip's source starts exactly where its first
         # piece sits on the transcript clock. There is no second clock to line up.
         offset, dur = segs[0][1], segs[-1][2] - segs[0][1]

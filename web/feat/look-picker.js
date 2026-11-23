@@ -391,7 +391,7 @@
   function scan(root) {
     try {
       const top = root && root.querySelectorAll ? root : document;
-      for (const sel of Array.from(top.querySelectorAll("select[data-caption-style], select#br_style, select[data-k=layout], select[data-f=layout]"))) enhance(sel);
+      for (const sel of Array.from(top.querySelectorAll("select[data-caption-style], select#br_style, select[data-k=layout]"))) enhance(sel);
     } catch { /* a picker that cannot draw leaves the plain select, which still works */ }
   }
 

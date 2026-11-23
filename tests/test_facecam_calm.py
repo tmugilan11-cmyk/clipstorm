@@ -101,6 +101,25 @@ def main():
     check("a perfectly still box says nothing", fc._center_of(np.full((40, 100), 0.5)) is None)
     check("movement everywhere says nothing", fc._center_of(np.random.RandomState(1).uniform(8, 12, (40, 100))) is None)
 
+    # ---- is the webcam still drawn where it was found? its border has to be in the picture
+    rng = np.random.default_rng(5)
+    frame = rng.normal(120, 6, size=(1080, 1920)).astype(np.float32)          # a busy game frame
+    with_cam = frame.copy()
+    with_cam[386:681, 0:430] = 40.0                                           # a darker webcam picture on the left side
+    check("a webcam's border is strong where the webcam is", fc.border_strength(with_cam, (0, 386, 430, 295)) >= fc.BORDER,
+          fc.border_strength(with_cam, (0, 386, 430, 295)))
+    check("the same place with no webcam has no border", fc.border_strength(frame, (0, 386, 430, 295)) < fc.BORDER,
+          fc.border_strength(frame, (0, 386, 430, 295)))
+    check("a box outside the frame is not there", fc.border_strength(frame, (1800, 900, 400, 400)) == 0.0)
+    real_frame = fc._full_frame
+    fc._full_frame = lambda path: with_cam if path == "cam" else (None if path == "broken" else frame)
+    try:
+        check("a clip that shows the webcam confirms it", fc.still_there("cam", (0, 386, 430, 295)) is True)
+        check("a clip without the webcam does not", fc.still_there("intro", (0, 386, 430, 295)) is False)
+        check("a clip that cannot be read does not", fc.still_there("broken", (0, 386, 430, 295)) is False)
+    finally:
+        fc._full_frame = real_frame
+
     print()
     if FAILED:
         print(f"{len(FAILED)} failed: " + ", ".join(FAILED))

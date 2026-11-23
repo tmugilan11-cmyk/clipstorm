@@ -246,6 +246,39 @@ def main():
         left = [p.name for p, _, _ in s.segments]
         check("pieces the AI has not read yet outlive a short buffer", "seg_000023.ts" in left, left[:3])
         check("pieces it has read may go", "seg_000010.ts" not in left, left[:3])
+        # ------------------------------------------------ a clip waiting to be made keeps its pieces
+        w = session(root, buffer_min=5)
+        w._piece_audio = lambda piece: sound(60)
+        for i in range(40):
+            f = w.buf / f"seg_{i:06d}.ts"
+            f.write_bytes(b"x" * 8)
+            w._commit(f, 60.0)
+        w.pending.clear()
+        w.t_done = w.judged_to = 2400.0               # heard and read to minute 40
+        w.job["clips"].append({"id": "clip001", "start": 610.0, "end": 640.0, "status": "queued"})
+        w._scan_segments()
+        left = [p.name for p, _, _ in w.segments]
+        check("the pieces of a clip still waiting to be made are kept", "seg_000010.ts" in left and "seg_000009.ts" in left, left[:3])
+        check("older pieces nobody is waiting for still go", "seg_000005.ts" not in left, left[:3])
+        w.job["clips"][0].update(status="done", src="x")
+        w._scan_segments()
+        check("once the clip is made its pieces may go", "seg_000010.ts" not in [p.name for p, _, _ in w.segments])
+
+        # ------------------------------------------------ the webcam is looked for in every clip, not once
+        c = session(root)
+        looked = []
+        c._find_facecam = lambda src: (looked.append(src), {"intro": None, "game1": [0, 386, 430, 295],
+                                                            "odd": [1640, 728, 280, 352]}.get(src))[1]
+        there = {"game2": True, "intro2": False, "odd": False}
+        live.facecam.still_there = lambda src, box: there.get(src, False)
+        check("a first clip with no webcam in it finds none", c._webcam_for("intro") is None)
+        check("the next clip is looked at afresh and finds it", c._webcam_for("game1") == [0, 386, 430, 295])
+        check("a later clip only has it confirmed, not searched again",
+              c._webcam_for("game2") == [0, 386, 430, 295] and looked == ["intro", "game1"], looked)
+        check("a scene without the webcam gets no webcam", c._webcam_for("intro2") is None)
+        check("a one-off find elsewhere does not replace the usual place",
+              c._webcam_for("odd") == [1640, 728, 280, 352] and c.facecam_box == [0, 386, 430, 295], c.facecam_box)
+
         s.judged_to = 0.0                             # an AI that never answers must not keep everything for ever
         s._scan_segments()
         check("an AI that never answers cannot fill the disk", "seg_000015.ts" not in [p.name for p, _, _ in s.segments])

@@ -447,6 +447,48 @@ def _seen(path: str | Path, box, w: int, h: int, still: np.ndarray, light: np.nd
     return _finish(path, found, w, h, still)
 
 
+BORDER = 5.0               # how much stronger than the picture's usual detail a webcam's border must be
+
+
+def border_strength(frame: np.ndarray, box) -> float:
+    """How clearly a rectangle's border is drawn in one grey frame: the middle one of its sides' strengths, each
+    measured against the picture's usual detail. A webcam drawn over a game scores in the tens; the same
+    rectangle laid over a scene with no webcam in it scores about 1."""
+    fh, fw = frame.shape
+    x, y, w, h = (int(v) for v in box)
+    if w < 8 or h < 8 or x < 0 or y < 0 or x + w > fw or y + h > fh:
+        return 0.0
+    gx = np.abs(np.diff(frame.astype(np.float32), axis=1))
+    gy = np.abs(np.diff(frame.astype(np.float32), axis=0))
+    usual = (float(gx.mean()) + float(gy.mean())) / 2.0 + 1e-6
+    sides = []
+    if x > 3:                                   # a side that is the frame's own edge has no border to measure
+        sides.append(float(gx[y:y + h, x - 3:x + 3].max(axis=1).mean()))
+    if x + w < fw - 3:
+        sides.append(float(gx[y:y + h, x + w - 3:x + w + 3].max(axis=1).mean()))
+    if y > 3:
+        sides.append(float(gy[y - 3:y + 3, x:x + w].max(axis=0).mean()))
+    if y + h < fh - 3:
+        sides.append(float(gy[y + h - 3:y + h + 3, x:x + w].max(axis=0).mean()))
+    if len(sides) < 2:
+        return 0.0
+    return float(np.median(sides)) / usual
+
+
+def still_there(path: str | Path, box) -> bool:
+    """Is the webcam drawn at `box` (x, y, width, height in source pixels) in this video?
+
+    A stream does not show its webcam the whole time: it opens with the camera filling the screen, cuts away,
+    comes back. A box found in one clip is therefore confirmed against each later clip before it is used: its
+    border must really be in the picture. Measured on a five-hour stream, every clip with the webcam scored
+    6 to 100 and the one without it scored about 1."""
+    try:
+        frame = _full_frame(path)
+        return frame is not None and border_strength(frame, box) >= BORDER
+    except Exception:  # noqa: BLE001 - a file that cannot be read has no webcam we can vouch for
+        return False
+
+
 def detect(path: str | Path, ask=None) -> dict | None:
     """The facecam's box in the source, in source pixels, or None.
 

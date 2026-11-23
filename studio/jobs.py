@@ -516,6 +516,24 @@ def _brand_kwargs(job) -> dict:
     return {"brand": doc} if takes_brand else {}
 
 
+def _webcam_in(job, src) -> list | None:
+    """The webcam's box in this video, or None. The place already known for the job is tried first and only
+    believed if its border is really in this picture; otherwise the picture is searched."""
+    try:
+        known = job.get("facecam")
+        if known and len(known) == 4 and facecam.still_there(src, known):
+            return [int(v) for v in known]
+        box = facecam.detect(src)
+        if box and box.get("conf") == "high":
+            found = [box["x"], box["y"], box["w"], box["h"]]
+            if not job.get("facecam"):
+                job["facecam"] = found
+            return found
+    except Exception:  # noqa: BLE001 - no webcam is a layout, never a failed clip
+        traceback.print_exc()
+    return None
+
+
 def render_one(job, clip, words):
     d = Path(job["dir"])
     clip["status"] = "rendering"
@@ -538,6 +556,18 @@ def render_one(job, clip, words):
             traceback.print_exc()
         if plan is not None:
             clip["plan"] = local["plan"] = plan
+        # A layout that shows the streamer has to know where the webcam is in THIS clip. A clip made before one
+        # was found, or switched to such a layout in the editor, carries none - and the renderer then quietly
+        # made a plain clip, so choosing "Facecam on top" appeared to do nothing. Look in the clip's own video.
+        wants_face = local.get("layout") in ("gameplay", "stack") or (plan and plan.get("format") == "reveal")
+        if wants_face and not (local.get("facecam") and len(local["facecam"]) == 4):
+            box = _webcam_in(job, src)
+            if box:
+                clip["facecam"] = local["facecam"] = box
+            else:
+                clip["layout_note"] = "No webcam was found in this clip, so it was made without the streamer panel."
+        elif clip.get("layout_note"):
+            clip.pop("layout_note", None)
         # A Reveal keeps the streamer's face hidden until the payoff, so it needs the layout that has a face panel.
         if plan and plan.get("format") == "reveal" and local.get("facecam"):
             local["layout"] = "stack"
@@ -787,7 +817,11 @@ def _piece_again(job, clip):
     """Remaking a clip whose own piece of the video was never fetched (its first try failed) and whose whole video
     is not here: fetch the piece now, cut exactly at the asked time, so no sound matching is needed."""
     src = job.get("source") or {}
-    if src.get("type") != "url" or not src.get("url"):
+    # A clip of a live recording whose stream pieces are gone can still be made once the stream is over: the
+    # platform keeps the replay, and its clock is the recording's clock (measured on a six-hour stream: within
+    # 0.03 s from start to end), so the same stretch is fetched from there.
+    replay = src.get("type") == "live" and job.get("status") != "live"
+    if (src.get("type") != "url" and not replay) or not src.get("url"):
         raise RuntimeError("The original video is no longer here, so this clip can't be made again. Add the video again.")
     d = Path(job["dir"])
     want = max(0.0, clip["start"] - PAD)

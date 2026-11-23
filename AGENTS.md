@@ -217,3 +217,15 @@ the example. `start.bat` starts the server on port 8765 and opens the page. The 
 `docs/research/` are never published (`.gitignore`).
 
 **One recording makes at most `MAX_LIVE_CLIPS` (100) by itself**, however high "clips per hour" is set.
+
+**What the first whole-stream run taught (2026-11-23, 5 h 45 min, 47 clips).** Three things were wrong and are fixed.
+Ten clips failed with "no longer in the buffer": while a stream is caught up on, clips are chosen far faster than
+they render, so `live._scan_segments` now keeps the pieces of every clip still waiting (`queued`/`rendering` with
+no `src`). All 37 finished clips came out without the streamer: the webcam was looked for once, in the first clip,
+which was the full-screen intro; `live._webcam_for` now checks every clip, confirming the usual place against that
+clip's own picture with `facecam.still_there` (a border strength of 6-100 with the webcam, about 1 without) and
+searching afresh only when it is not there. And choosing "Facecam on top" in the editor did nothing for a clip with
+no saved webcam box: `jobs.render_one` now finds the webcam in the clip's own video (`_webcam_in`) and writes
+`layout_note` when there is none. A live clip whose pieces are gone is re-made from the stream's replay once the
+stream is over (`jobs._piece_again`): the replay's clock was measured against the recording's at three points and
+was within 0.03 s.

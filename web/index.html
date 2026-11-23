@@ -609,13 +609,17 @@ button.tile:hover,button.tile:focus-visible{background:var(--brand-soft);border-
 .clip .hook{font-size:14px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .clip .why{font-size:12px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .clip .ttl{-webkit-line-clamp:1}
-.clip-acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:auto;padding-top:8px}
-.clip-acts .btn{height:32px;padding:0 6px;justify-content:center;min-width:0;font-size:12px}
+/* Three equal columns could not hold "Download" in a narrow card, so its icon ran into the buttons either side.
+   The buttons now take the room their words need and wrap to a second row when a card is too narrow for all three.
+   (#main and !important: the shared look in feat/skin.js sets a wider padding on every small button.) */
+.clip-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:8px}
+#main .clip-acts .btn{flex:1 1 auto;height:32px;padding:0 8px !important;justify-content:center;min-width:0;font-size:12px !important;gap:5px;white-space:nowrap}
 .clip-acts .btn svg{flex:none}
 .clip-acts .btn.pq{background:var(--brand-soft);color:var(--brand);border-color:var(--brand-soft)}
 .clip-acts .btn.pq:hover{background:var(--brand);color:var(--brand-ink)}
 .clip-acts+.clip-foot{margin-top:0;padding-top:2px}
-@media (max-width:420px){.clip-acts .lbl{display:none}}
+.clip-acts .lbl{display:none}
+#main .clip-acts a.btn{flex:0 0 38px;padding:0 !important}
 .job-prog{margin:4px 0 16px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r);background:var(--muted)}
 .jp-stage{display:flex;justify-content:space-between;gap:10px;margin:0 0 10px;font-size:14px;color:var(--text)}
 .jp-stage span{color:var(--brand);font-weight:700}
@@ -2864,7 +2868,7 @@ function edPresets(kind, cards, have, label) {
   const row = cards.filter(x => x.key === "off" || have[x.key]);
   if (!row.length) return "";
   return `<div class="ed-presets" role="group" aria-label="${esc(label)}">${row.map(x =>
-    `<button type="button" class="ed-preset" data-preset="${kind}:${x.key}" aria-pressed="false"><b>${esc(x.name)}</b><span>${esc(x.text)}</span><i class="ed-inuse">In use</i></button>`).join("")}</div>`;
+    `<button type="button" class="ed-preset" data-preset="${kind}:${x.key}" aria-pressed="false"><b>${esc(x.name)}</b><span>${esc(x.text)}</span><i class="ed-inuse">Selected</i></button>`).join("")}</div>`;
 }
 function openClip(jid, cid) { D.jid = jid; D.cid = cid; D.sig = ""; D.step = "cut"; drawClipDlg(true); $("#clipdlg").showModal(); loadHist(); }
 function drawClipDlg(full) {
@@ -2900,7 +2904,7 @@ function drawClipDlg(full) {
             </select></label>
             <p class="hint">Normal shows the moment as it is. Wait for it adds a "WAIT FOR IT" tag and a bar that fills until the payoff, then a flash. Reveal keeps the streamer's face blurred until the payoff; it needs the streamer's webcam and uses the "Facecam on top" layout.</p>
             <details class="ed-more"><summary>More options</summary>
-              <label class="f">Layout (all of them)<select data-f="layout">${opts(S.status.layouts, c.layout)}</select></label>
+              <label class="f" hidden>Layout (all of them)<select data-f="layout">${opts(S.status.layouts, c.layout)}</select></label>
               <label class="f">Behind the video
                 <select data-f="bg">
                   <option value=""${(c.bg || "") === "" ? " selected" : ""}>Blurred copy of the video</option>

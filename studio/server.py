@@ -28,7 +28,7 @@ from . import (accounts, ai, alerts, auth, config, creators, ctx, db, jobs, live
 from . import (api_auto, api_brand, api_brandai, api_heading, api_history, api_hooks, api_igcaption,
                api_learnreport, api_memesound, api_overlay, api_posttime, api_preview, api_review, api_sound,
                api_stats, api_style, api_text)
-from . import api_analytics, api_learn, api_trends
+from . import api_analytics, api_learn, api_own_results, api_trends
 
 from . import tools as _tools  # noqa: E402
 
@@ -271,6 +271,7 @@ app.include_router(api_hooks.router)
 app.include_router(api_learnreport.router)
 app.include_router(api_brandai.router)
 app.include_router(api_posttime.router)
+app.include_router(api_own_results.router)
 
 
 # Cloudflare's published address ranges (cloudflare.com/ips). PEAKCUT_CDN_RANGES replaces them if they ever change.

@@ -356,19 +356,61 @@ def _youtube_finish(code: str) -> dict:
     item = ch["items"][0]
     acc = {"id": f"yt_{item['id']}", "platform": "youtube", "name": item["snippet"]["title"], "added": time.time(),
            "refresh_token": tok["refresh_token"], "access_token": tok["access_token"],
-           "expires": time.time() + tok.get("expires_in", 3600) - 60}
+           "expires": time.time() + tok.get("expires_in", 3600) - 60,
+           # What Google really granted. Google lets a person untick a permission on its screen, so "connected"
+           # does not mean "may read the numbers": this is how the page can tell the two apart.
+           "scope": str(tok.get("scope") or "")}
     _put(acc)
     return acc
+
+
+def youtube_scopes(acc) -> dict:
+    """Which of the permissions PeakCut asked for the account really holds. A value is None when it is not
+    known (an account connected before the permissions were recorded), so the page does not accuse it."""
+    got = str((acc or {}).get("scope") or "")
+    if not got:
+        return {"upload": None, "read": None, "analytics": None}
+    return {"upload": "youtube.upload" in got, "read": "youtube.readonly" in got,
+            "analytics": "yt-analytics.readonly" in got}
+
+
+def youtube_status() -> dict:
+    """Everything the guided "Connect your YouTube channel" panel needs, and nothing secret: whether this
+    server has a Google app, the address to give Google, whether a channel is connected, whether the
+    saved sign-in still works, and whether the permission to read analytics was granted. Never raises."""
+    out = {"app_ready": youtube_ready(), "redirect": redirect_for("youtube"),
+           "https": config.PUBLIC_URL.startswith("https://"), "connected": False, "name": "",
+           "scopes": {}, "analytics_scope": None, "token_ok": None, "error": ""}
+    acc = youtube_account()
+    if not acc:
+        return out
+    out.update(connected=True, name=str(acc.get("name") or ""), scopes=youtube_scopes(acc))
+    out["analytics_scope"] = out["scopes"]["analytics"]
+    try:
+        _yt_token(acc)
+        out["token_ok"] = True
+    except Exception as e:  # noqa: BLE001  - the panel says why; it must still draw
+        out["token_ok"] = False
+        out["error"] = str(e)[:300]
+    return out
 
 
 def _yt_token(acc) -> str:
     if acc.get("expires", 0) > time.time():
         return acc["access_token"]
     cid, secret = app_keys("google")
-    tok = _check(httpx.post("https://oauth2.googleapis.com/token", data={
-        "client_id": cid, "client_secret": secret,
-        "refresh_token": acc["refresh_token"], "grant_type": "refresh_token"}, timeout=30),
-        "Refreshing the YouTube sign-in").json()
+    try:
+        tok = _check(httpx.post("https://oauth2.googleapis.com/token", data={
+            "client_id": cid, "client_secret": secret,
+            "refresh_token": acc["refresh_token"], "grant_type": "refresh_token"}, timeout=30),
+            "Refreshing the YouTube sign-in").json()
+    except RuntimeError as e:
+        if "invalid_grant" in str(e):
+            # Google retires a sign-in after seven days while the Google app is still marked "Testing", and when
+            # the person removes PeakCut's access. Either way the only cure is to connect once more.
+            raise RuntimeError("Google no longer accepts the saved YouTube sign-in. Press Connect again. "
+                               "(Set the Google app to \"In production\" so it lasts longer than seven days.)") from e
+        raise
     acc.update(access_token=tok["access_token"], expires=time.time() + tok.get("expires_in", 3600) - 60)
     _put(acc)
     return acc["access_token"]

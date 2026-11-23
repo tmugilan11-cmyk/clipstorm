@@ -235,3 +235,33 @@ was within 0.03 s.
 `heard=meant, ...`). Timings are untouched, capitals and "'s" keep their shape, "giga chad" is left alone. On the
 first whole-stream run the engine wrote "chad" 268 times and "chat" 92 times, and the judge then titled clips
 about "his friend Chad". Checked by `tests/test_word_fixes.py`.
+
+**Picture and sound are cut on one clock, never by `-ss` before a .ts input.** On an MPEG-TS source (every live
+clip) `ffmpeg -ss X -i piece.ts` lands after X, the picture waits for the next keyframe (two seconds apart on a
+YouTube stream) and the sound does not: the finished clip had the streamer's voice up to two seconds before his lips
+(clip003 of the first whole-stream run: picture 23.23 s, sound 25.00 s, picture 1.77 s late). `render._render_in`
+now opens the input `PREROLL` (12 s) early and cuts both tracks with `render._trim` at the same timestamp, renumbered
+by that fixed amount (never `PTS-STARTPTS`, which hid the gap). The finished file is measured (`render.av_gap`); a
+gap over 0.15 s re-renders from the very start of the source. Measured after the fix on the real clip003 source: the
+first frame matches the source frame at the asked time, the sound is within 7 ms (the stream's own offset). Any new
+code that cuts video must do the same. Checked by `tests/test_av_sync.py`.
+
+**Clips are listed best first.** `byScore` in `web/index.html` (also `window.PeakCut.byScore`) orders every clip
+list by score, highest at the top; the live page and the review queue use the same order.
+
+**The accent is violet.** Every orange in `web/` was turned into a violet of the same brightness (same WCAG
+luminance, so every measured contrast ratio in the comments still holds): `--brand #AF9BFF`, `--brand-deep #C8BAFF`,
+`--brand-soft #20183F`. Warning amber, Google and Instagram colours were left alone. Logo addresses carry `?v=4`.
+
+**The judge learns from the owner's own results.** `studio/own_results.py` joins every posted clip
+(`posting._mine()`) to its clip record (hook, title, kind, rubric marks, length, judge score, layout) and its
+numbers: views, likes, comments from YouTube when connected (`ytstats.bulk`: Data API counts, Analytics average
+watched, and the 3-second hold from the retention curve for the newest 20), from Zernio for posts that went through
+it, else the views PeakCut already tracks. The pass is cached in `users/<uid>/own_results.json`, run at most every
+6 h (Refresh still waits 5 min) and never inside a render; a failed pass keeps the old numbers.
+`own_results.taste_lines(creator=None, n=12)` reads the cache only and never raises: "Did well / Did badly" against
+the channel's own median (per platform once it has 3+ clips) plus a judge-score-versus-reality line; clips under 2
+days old are listed but never judged, and with fewer than 3 measured clips it returns []. `studio/api_own_results.py`
+serves the "What worked" page (`web/feat/own-results.js`) with the step-by-step "Connect your YouTube channel" guide.
+`accounts.youtube_status()` records the scopes Google granted and reports a retired refresh token (Google ends it
+after 7 days while the app is in Testing). Checked by `tests/test_own_results.py`.

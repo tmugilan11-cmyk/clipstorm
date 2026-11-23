@@ -125,6 +125,12 @@ def explain(e) -> str:
     code = getattr(e, "code", 0)
     if "quota" in low or code == 429:
         return "YouTube's daily quota for this project is spent. Try again tomorrow."
+    if "has not been used" in low or "is disabled" in low or "accessnotconfigured" in low.replace(" ", ""):
+        # The most common stumble on a new Google project: the two YouTube APIs are separate switches.
+        return ("A YouTube switch is still off in your Google Cloud project. Turn on both \"YouTube Data API v3\" "
+                "and \"YouTube Analytics API\" (APIs & Services, Library), wait a minute, and try again.")
+    if "invalid_grant" in low or "invalid credentials" in low or "unauthenticated" in low or "token has been expired" in low:
+        return "Google no longer accepts the saved YouTube sign-in. Press Connect again."
     if code == 401 or "api key not valid" in low or "keyinvalid" in low:
         return "YouTube refused the key. Check the key in Settings."
     if code == 403:
@@ -312,6 +318,68 @@ def analytics(token: str, start: str, end: str, metrics: str, dimensions: str = 
              token=token, base=ANA)
     cols = [str(h.get("name") or "") for h in (r.get("columnHeaders") or []) if isinstance(h, dict)]
     return [dict(zip(cols, row)) for row in (r.get("rows") or []) if isinstance(row, (list, tuple))]
+
+
+def kept_at(token: str, video: str, seconds: int, start: str, end: str, probe: float = 0.0) -> float | None:
+    """The share of viewers (0 to 1) still watching at the hook second, read from the audience-retention curve
+    Google keeps for one video; None when there is no curve or the length is unknown."""
+    if not token or not video or not seconds:
+        return None
+    probe = float(probe or public()["hook_second"])
+    curve = [r for r in analytics(token, start, end, "audienceWatchRatio",
+                                  dimensions="elapsedVideoTimeRatio", filters="video==" + video)
+             if _float(r.get("elapsedVideoTimeRatio")) is not None and _float(r.get("audienceWatchRatio")) is not None]
+    if not curve:
+        return None
+    near = min(curve, key=lambda r: abs(_float(r["elapsedVideoTimeRatio"]) - probe / seconds))
+    return _float(near["audienceWatchRatio"])
+
+
+def bulk(token: str, ids: list, since: str = "", retention_for: int = 0) -> dict:
+    """The numbers for many of the channel's own videos in as few calls as possible.
+
+    Returns {"videos": {id: {views, likes, comments, seconds, published, averageViewDuration,
+    averageViewPercentage, kept_at_3s}}, "error": ""}. The Data API gives views, likes and comments 50 at a time;
+    Analytics gives the average watched for up to 100 videos per call; the 3-second curve is one call per video,
+    so it is read only for the first `retention_for` ids (the caller puts the newest first). A step that fails
+    leaves the rest in place and names the reason in "error". Never raises."""
+    out, err = {}, ""
+    wanted = list(dict.fromkeys(vid_id(i) or "" for i in (ids or [])))
+    wanted = [i for i in wanted if i]
+    if not token or not wanted:
+        return {"videos": out, "error": ""}
+    try:
+        for v in _videos(wanted, "", token):
+            out[v["id"]] = {k: v.get(k) for k in ("views", "likes", "comments", "seconds", "published")}
+    except Exception as e:                  # noqa: BLE001
+        err = explain(e) or str(e)[:200]
+    start = _days_ago(int(public()["median_days"]) * 8)
+    if since and _DATE.fullmatch(str(since)[:10]):
+        start = str(since)[:10]
+    end = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    for i in range(0, len(wanted), 100):
+        chunk = wanted[i:i + 100]
+        try:
+            for r in analytics(token, start, end, _METRICS, dimensions="video",
+                               filters="video==" + ",".join(chunk), max_results=len(chunk)):
+                vid = str(r.get("video") or "")
+                if vid in out or vid in chunk:
+                    out.setdefault(vid, {}).update({k: r[k] for k in ("averageViewDuration", "averageViewPercentage") if k in r})
+        except Exception as e:              # noqa: BLE001
+            err = err or explain(e) or str(e)[:200]
+            break
+    for vid in wanted[:max(0, int(retention_for))]:
+        got = out.get(vid)
+        if got is None:
+            continue
+        try:
+            at3 = kept_at(token, vid, int(got.get("seconds") or 0), start, end)
+        except Exception as e:              # noqa: BLE001
+            err = err or explain(e) or str(e)[:200]
+            break
+        if at3 is not None:
+            got["kept_at_3s"] = at3
+    return {"videos": out, "error": err}
 
 
 def deep(vid: str, key: str, token: str) -> dict:

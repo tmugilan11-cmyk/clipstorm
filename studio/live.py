@@ -367,7 +367,9 @@ class Session:
         runs at a time; if the running one is stuck far past its own timeout, a new one is let through.
         """
         now = time.time()
-        if self.ai_busy and now - self.ai_busy < 3 * config.LIVE_AI_TIMEOUT + 60:
+        # A check is four answers one after another (a reader, the scouts, two critics, the final desk), each
+        # allowed LIVE_AI_TIMEOUT; only one stuck well past all of that lets a second check through.
+        if self.ai_busy and now - self.ai_busy < 5 * config.LIVE_AI_TIMEOUT + 60:
             return False
 
         def work():
@@ -1049,14 +1051,43 @@ class Session:
             self.last_spike = n
             self.spikes += 1
 
+    def _frame_at(self, t):
+        """Which buffer piece holds second `t` of the recording, and where in it: (absolute path, second in the
+        piece), or None once the piece is gone. The judge takes its frames from here."""
+        with self.lock:
+            for path, a, b in self.segments:
+                if a <= t < b:
+                    return (str(Path(path).resolve()), t - a) if Path(path).exists() else None
+        return None
+
+    def _story_step(self, upto, out):
+        """Read the newest part of the stream into the story (studio/judge_story.py), on its own thread while the
+        judge works. Only the part since the story was last written is read, at most fifteen minutes of it."""
+        from . import judge_story
+        try:
+            story = self.job.get("story") or judge_story.empty()
+            a = max(float(story.get("upto") or 0.0), upto - 900.0)
+            words = [w for w in list(self.words) if a <= w["s"] < upto]
+            if len(words) < 20:
+                return
+            usage.set_context(self.job["creator"], self.job["title"] or "Live stream")
+            z = brain.loud_zscore(np.array(self.db, dtype=np.float32))
+            new, spent = judge_story.advance(story, words, a, upto, self.job["title"], self.job["uploader"],
+                                             self._game(), config.LIVE_AI_TIMEOUT, live=True, z=z)
+            out.update(story=new, tokens=spent)
+        except Exception:  # noqa: BLE001 - the story is read again with the next check
+            pass
+
     def _ai_check(self, window=None, why=None):
         """Ask the judge (studio/judge.py) about a stretch of the stream.
 
-        Two scouts read the stretch, one following the talk and one following the reactions, and a critic then
-        scores every find the way a stranger scrolling past would, with the words, the loudness and the chat in
-        front of it. A clip is made when its score reaches the creator's bar; with "both" chosen in Setup the
-        critic must also have seen a real reaction, not just good words."""
-        from . import judge
+        A reader works out who is talking and what is going on, with the story of the stream so far in front
+        of it; three scouts read the stretch; a few frames of every find are looked at; and critics score
+        every find the way a stranger scrolling past would, with the words, the loudness, the chat and the
+        picture in front of them. A clip is made when its score reaches the creator's bar; with "both" chosen in
+        Setup the critics must also have seen a real reaction, not just good words. While the judge works, the
+        story is brought up to date on a thread of its own, and saved in the job so a restart keeps it."""
+        from . import judge, judge_look, judge_story
         st = self.settings
         every = int(st.get("ai_every_min", 3)) or 3
         if window:                    # just the stretch around a jump, or around someone saying "clip"
@@ -1093,19 +1124,39 @@ class Session:
         has_chat = bool(self.chat_on or self.chat_total)
         counts = (lambda a, b: sum(self.chat.get(t, 0) for t in range(int(a), int(b)))) if has_chat else None
         want = 1 if every <= 2 else 2
+        story = self.job.get("story") or {}
+        # the story moves on only with the regular checks, which read the whole transcript in order
+        told, keeper = {}, None
+        if not window and now - float(story.get("upto") or 0.0) >= 60:
+            keeper = threading.Thread(target=ctx.bind(self._story_step), args=(now, told), daemon=True,
+                                      name="story")
+            keeper.start()
+        done = {}
         try:
             cands, tok, _model = judge.pick(
                 win, z, 0.0, chat=self._chat_spike if has_chat else None, chat_counts=counts, start=ws, end=now,
                 title=self.job["title"], uploader=self.job["uploader"], min_len=st["min_len"], max_len=st["max_len"],
                 existing=self.job["clips"], n=want, must=must, game=self._game(), timeout=config.LIVE_AI_TIMEOUT,
-                hook_words=jobs._hook_words(self.job), live=True, focus=st.get("clip_focus") or "")
+                hook_words=jobs._hook_words(self.job), live=True, focus=st.get("clip_focus") or "",
+                story=judge_story.brief(story, ws, now) if story else "", frames=self._frame_at,
+                made=[c for c in self.job["clips"] if c.get("hook")][-14:], creator=self.job.get("creator"),
+                info=done)
         except Exception as e:  # noqa: BLE001
             self.job["ai"]["last_error"] = str(e)[-200:]
             # never further back than twenty minutes, so an AI that is down for an hour is not owed the hour
             self.judged_to = max(read_before, now - 2 * CATCHUP_AI)
             return self._verdict(verdict, "AI error: " + str(e)[-80:])
-        self.checks += 6              # a reader, three scouts and two critics
+        finally:
+            if keeper:
+                keeper.join(config.LIVE_AI_TIMEOUT + 10)
+                if told.get("story"):
+                    self.job["story"] = judge_story.short(told["story"])
+                    self.tokens += told.get("tokens", 0)
+                    self.checks += 1
+        self.checks += int(done.get("calls") or 6)     # a reader, three scouts, two critics, sometimes a third
         self.tokens += tok
+        if done.get("look") and done["look"] != "vision":
+            self.job["ai"]["note"] = judge_look.note(done["look"])
         best = cands[0] if cands else None
         verdict["transcript"] = best["score"] if best else 0
         verdict["reaction"] = (best.get("rubric") or {}).get("emotion", 0) * 10 if best else None
@@ -1133,6 +1184,7 @@ class Session:
                    "More than one scout found it and the critics agreed" if marks.get("scouts", 1) > 1 else
                    "The critics agreed")
             c["judges"] = {"words": c["score"], "reaction": marks.get("emotion", 0) * 10 or None, "why": how}
+            c.pop("screen", None)     # what was on screen served the judges; the clip does not keep it
             self._add_clip(c)
             self._verdict(verdict, f"Clipped ({c['score']}): {(c.get('reason') or how)[:80]}")
             added += 1
@@ -1400,7 +1452,7 @@ def recover(job):
     jobs.submit_live(cleanup)
 
 
-def start_session(creator: dict, url=None, frag_start=0) -> dict:
+def start_session(creator: dict, url=None, frag_start=0, story=None) -> dict:
     url = normalize(url or creator.get("channel") or "")
     if not re.match(r"^https?://[^/]+\.[^/]+/", url + "/"):
         raise ValueError("Add this creator's channel link first.")
@@ -1424,6 +1476,8 @@ def start_session(creator: dict, url=None, frag_start=0) -> dict:
     job.update(status="live", stage="Connecting to the stream")
     if frag_start:
         job["frag_start"] = int(frag_start)     # picked up after a restart: carry on from here, not from the start
+    if isinstance(story, dict) and story:
+        job["story"] = story                    # ...and with the story of the stream so far, so the judge remembers it
     jobs.save(job)
     Session(job, creator).start()
     return job
@@ -1506,25 +1560,37 @@ def watch_loop():
         time.sleep(max(15, 120 - (time.time() - t0)))
 
 
+def _restarted(story):
+    """The story of a recording, ready for the recording that picks it up after a restart (or None)."""
+    try:
+        from . import judge_story
+        return judge_story.carried(story) if isinstance(story, dict) and story else None
+    except Exception:  # noqa: BLE001 - the new recording starts its own story
+        return None
+
+
 def _resume_recordings(paused):
     """Recordings that were running when the server stopped: start recording the same channel again, if the
     stream is still on. Tried for a few minutes, since the server may come back a little before the network."""
     time.sleep(10)
     for _ in range(6):
         left = []
-        for uid, cid, url, frag in paused:
+        for uid, cid, url, frag, *rest in paused:
+            story = rest[0] if rest else None
             with ctx.as_user(uid):
                 try:
                     c = creators.get(cid)
                     if not c or active_for(cid):
                         continue
                     resolve(normalize(url))      # raises NotLive if the stream has ended: no empty recording is made
-                    start_session(c, url, frag_start=frag or 0)
+                    # A recording picked up from a later fragment has its own clock, starting at zero again, so
+                    # the story's seconds would point at the wrong moments: it is carried on as words only.
+                    start_session(c, url, frag_start=frag or 0, story=_restarted(story))
                     creators.log(cid, "Recording picked up again after a server update")
                 except NotLive:
                     continue                  # the stream ended while the server was away
                 except Exception:  # noqa: BLE001 - try again shortly
-                    left.append((uid, cid, url, frag))
+                    left.append((uid, cid, url, frag, story))
         if not left:
             return
         paused = left
@@ -1541,7 +1607,7 @@ def start():
         elif j.get("kind") == "live" and j.get("id") not in SESSIONS:
             _sweep(j)            # nothing is recording into it and no clip is waiting on it
         if j.get("was_live") and j.get("creator"):
-            paused.append((j["user"], j["creator"], j["source"]["url"], j.get("frag_done")))
+            paused.append((j["user"], j["creator"], j["source"]["url"], j.get("frag_done"), j.get("story")))
             j.pop("was_live", None)
             jobs.save(j)
     if paused:

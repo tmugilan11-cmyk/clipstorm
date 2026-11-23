@@ -1143,7 +1143,10 @@ def _run_job(job):
                                      hook_words=_hook_words(job), min_score=o.get("min_score"),
                                      focus=((creators.get(job["creator"]) or {}).get("clip_focus") or "")
                                      if job.get("creator") else "",
-                                     context_for=lambda s_, e_, _a=a: signals.brief(sig, _a / 16000 + s_, _a / 16000 + e_, shift=_a / 16000))
+                                     context_for=lambda s_, e_, _a=a: signals.brief(sig, _a / 16000 + s_, _a / 16000 + e_, shift=_a / 16000),
+                                     memory=d / "story.json", whole=yt[0] if yt else None, at=shift,
+                                     source=lambda: job.get("source_path"), made=list(job["clips"]),
+                                     creator=job.get("creator"))
         tokens += ai.get("tokens", 0)
         model = ai.get("model") or model
         if ai.get("note"):

@@ -9,7 +9,8 @@ import numpy as np
 
 from . import ai, chat, config, games, usage, roman
 
-WINDOW_SEC, OVERLAP_SEC = 8 * 60, 60     # read in eight-minute stretches: a shorter read is a more careful one
+WINDOW_SEC, OVERLAP_SEC = 8 * 60, 90     # read in eight-minute stretches: a shorter read is a more careful one;
+                                         # each overlaps the last by 90 s, so a moment on the edge is seen whole
 MIN_SCORE = int(config.env("PEAKCUT_MIN_SCORE", "68"))   # a video clip scoring under this is not made
 BEST_OF_WEAK = 55                         # ...except the single best one, so a quiet video still gives something
 
@@ -298,14 +299,56 @@ def _ctx(fn, a, b):
         return ""
 
 
+def _story_for(memory, whole, words, z, at, title, uploader, game, log):
+    """The story of the video this block belongs to (studio/judge_story.py), brought up to the end of this block.
+
+    `memory` is where it is kept between blocks (a file in the job's folder), `whole` the transcript of the
+    whole video when it is already known (then the story is read once, all of it, and knows what happens
+    later), `at` where this block starts on the video's clock. Returns (story or None, tokens)."""
+    from . import judge_story
+    story = judge_story.load(memory) if memory else None     # with no memory, the story lasts this call only
+    spent = 0
+    if whole and not (story and story.get("whole")):
+        story, spent = judge_story.build(whole, title, uploader, game, log=log)
+    elif not (story and story.get("whole")):
+        end = at + (max(w["e"] for w in words) if words else 0.0)
+        if not story or float(story.get("upto") or 0.0) < end - 30:
+            mine = [dict(w, s=w["s"] + at, e=w["e"] + at) for w in words]
+            loud = np.concatenate([np.zeros(int(at)), z]) if z is not None and len(z) and at < 6 * 3600 else None
+            story, spent = judge_story.advance(story, mine, max(at, float((story or {}).get("upto") or 0.0)),
+                                               end + 1, title, uploader, game, z=loud)
+    if memory and story:
+        judge_story.save(memory, story)
+    return story, spent
+
+
+def _frames_for(source, at):
+    """second of this block -> (the video file, second in it), or None when there is no video file yet."""
+    def where(t):
+        path = source() if callable(source) else source
+        if not path:
+            return None
+        return str(path), t + at
+    return where if source else None
+
+
 def find_clips(words, db, duration, title="", uploader="", max_clips=6, min_len=15, max_len=60, log=print, game=None,
-               hook_words=None, min_score=None, focus="", context_for=None):
+               hook_words=None, min_score=None, focus="", context_for=None, memory=None, whole=None, at=0.0,
+               source=None, made=(), creator=None):
     """The clips worth making from one video (or one block of a long one): (clips, what the AI did).
 
-    Every stretch is read by the judge (studio/judge.py): two scouts, then a critic who scores each find the
-    way a stranger scrolling past would. A clip under `min_score` is not made, so a video gives fewer clips
-    rather than weak ones; when nothing reaches it, the single best find is still kept if it is decent."""
-    from . import judge
+    Every stretch is read by the judge (studio/judge.py): a reader, three scouts, a look at the picture, then
+    critics who score each find the way a stranger scrolling past would; at the end a showrunner compares
+    the finalists of the whole block with each other and with the clips already made (`made`). A clip under
+    `min_score` is not made, so a video gives fewer clips rather than weak ones; when nothing reaches it, the
+    single best find is still kept if it is decent.
+
+    The story of the whole video is kept in `memory` (a file) from block to block; `whole` is the whole
+    transcript when it is known up front; `at` is where this block starts in the video; `source` is the video
+    file (or a function that gives it once it is downloaded), for the picture; `creator` is whose channel's own
+    results to learn from."""
+    import threading
+    from . import ctx, judge, judge_look, judge_show, judge_story
     floor = MIN_SCORE if min_score is None else int(min_score)
     z = loud_zscore(db)
     lines = make_lines(words, z)
@@ -317,25 +360,70 @@ def find_clips(words, db, duration, title="", uploader="", max_clips=6, min_len=
     windows = []
     while t < duration:
         windows.append((t, min(duration, t + WINDOW_SEC)))
+        if t + WINDOW_SEC >= duration:
+            break
         t += WINDOW_SEC - OVERLAP_SEC
     per_window = max(2, min(6, int(np.ceil(max_clips * 1.5 / len(windows))) + 1))
-    for a, b in windows:
+    story = None
+    if memory or whole or len(windows) > 1:
+        try:
+            story, spent = _story_for(memory, whole, words, z, at, title, uploader, game, log)
+            tokens += spent
+        except Exception as e:  # noqa: BLE001 - the judge reads without a story
+            log(f"The story of the video could not be read: {e}")
+    where = _frames_for(source, at)
+    looked, lock = set(), threading.Lock()
+    whose = usage.context()                  # the stretches run on threads of their own: same creator, same video
+
+    def one(a, b):
+        nonlocal tokens, used_model, read, failed, found
+        usage.set_context(*whose)
         chunk = [w for w in words if a <= w["s"] < b]
         if len(chunk) < 8:
-            continue
+            return
+        done = {}
         try:
             got, spent, model = judge.pick(chunk, z, 0.0, start=a, end=b, title=title, uploader=uploader,
                                            min_len=min_len, max_len=max_len, n=per_window, game=game,
                                            hook_words=hook_words, log=log, focus=focus,
-                                           context=_ctx(context_for, a, b))
-            tokens += spent
-            used_model = model or used_model
-            found += got
-            read += 1
+                                           context=_ctx(context_for, a, b),
+                                           story=judge_story.brief(story, a, b, at) if story else "",
+                                           frames=where, made=made, creator=creator, info=done)
+            with lock:
+                tokens += spent
+                used_model = model or used_model
+                found += got
+                read += 1
+                looked.add(done.get("look", ""))
         except Exception as e:  # noqa: BLE001
-            failed += 1
+            with lock:
+                failed += 1
             log(f"AI window {a:.0f}-{b:.0f}s failed: {e}")
+
+    # two stretches are judged at the same time: each is a handful of calls that wait on the network
+    for k in range(0, len(windows), 2):
+        ts = [threading.Thread(target=ctx.bind(one), args=w, daemon=True) for w in windows[k:k + 2]]
+        for th in ts:
+            th.start()
+        for th in ts:
+            th.join()
     note = ""
+    if read and found:
+        # the showrunner: every finalist of this block side by side, and with the clips already made
+        finalists = [c for c in found if c["score"] >= min(floor, BEST_OF_WEAK)]
+        if len(finalists) >= 2 or (finalists and made):
+            others = [c for c in found if c not in finalists]
+            text = judge_story.brief(story, 0, duration, at) if story else ""
+            ranked, dropped, spent = judge_show.rank(finalists, made, title, uploader, text, log=log, shift=at)
+            tokens += spent
+            found = ranked + others
+            for c in dropped:
+                log(f"Left out as a repeat: \"{c.get('hook', '')}\" - {c.get('reason', '')[:120]}")
+    seen_note = ""                       # how the picture was looked at, said after everything else
+    if read and source and not any(looked):
+        seen_note = judge_look.note("")
+    elif "text" in looked:
+        seen_note = judge_look.note("text")
     if not read:
         raw = fallback_by_loudness(db, words, max_clips, max_len, duration)
         lines_all = lines
@@ -361,6 +449,10 @@ def find_clips(words, db, duration, title="", uploader="", max_clips=6, min_len=
         if len(clips) >= max_clips:
             break
     clips.sort(key=lambda c: c["start"])
+    for c in clips:
+        c.pop("screen", None)            # what was on screen served the judges; the clip does not keep it
+    if seen_note and read:
+        note = (note + " " + seen_note).strip()
     return clips, {"model": used_model, "tokens": tokens, "note": note}
 
 

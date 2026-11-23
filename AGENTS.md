@@ -285,3 +285,20 @@ saved setups; every video has its own page at `/app/videos/<id>` with sort, scor
 grid/list switch, letter grades from the judge's marks, Keep/Skip and bulk Post (`web/feat/project-tools.js`); the
 clip editor is three columns (live transcript, video, tab rail); `web/feat/calendar.js` is a real month calendar and
 the old timers page is "Timers". Open-source ideas and skills found are in `docs/research/open-source-ideas.md`.
+
+**The judge remembers the stream, reads the screen, and has a final desk.** `studio/judge_story.py` keeps a story
+beside the judge: cast, running jokes, setups with their payoffs, beats. A finished video's story is read once in
+parallel parts and joined (`build`, kept as `story.json` in the job's folder, so every stretch also knows what happens
+later); a live recording moves it on with every regular check on a thread of its own (`advance`), keeps it short in
+`job["story"]`, and carries it over a restart (`carried`). `judge.pick(story=...)` puts it in front of the reader,
+scouts and critics. Critics see 75 s before a candidate (`BEFORE`) and may pull the start back to the setup a stranger
+needs; a cut longer than `max_len` loses its front, never its payoff. `studio/judge_look.py` looks at the picture:
+frames are cut from absolute paths, the AI is asked once whether it can see pictures (`data/judge_vision.json`; the
+qwen model in use cannot: HTTP 503), and without vision the text on screen is read with Windows' own OCR, so game
+subtitles show which lines are a game character's. `PEAKCUT_JUDGE_VISION=0` turns it off; the tests do. A third
+critic, the clip-page admin, sees only contenders, writes the posted hook, and names a made clip it repeats (a repeat
+counts only when `judge.same_story` finds two shared telling words). `studio/judge_show.py` compares a block's
+finalists side by side: drops repeats, re-ranks, moves a score at most +6/-15, a skip stays under `SKIP_CAP`.
+`own_results.taste_lines()` reaches scouts and critics. Measured in `docs/research/judge-v3-comparison.md`: 7 calls,
+46k tokens, 41 s per 8-minute live check (old: 6, 27k, 32 s), plus one story read in parallel. Checked by
+`tests/test_judge.py`.

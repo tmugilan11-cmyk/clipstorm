@@ -550,9 +550,23 @@ def _webcam_in(job, src) -> list | None:
     """The webcam's box in this video, or None. The place already known for the job is tried first and only
     believed if its border is really in this picture; otherwise the picture is searched."""
     try:
-        known = job.get("facecam")
-        if known and len(known) == 4 and facecam.still_there(src, known):
-            return [int(v) for v in known]
+        # Every place the webcam is already known to be in this video: the job's own, then the boxes its other
+        # clips found, the most used first. The job's box is often the stream's opening (the camera in a corner
+        # before the game starts) and a search of one dark, still scene finds nothing, because a webcam is told
+        # apart by its stillness against a moving game. Re-making "IT WAS KSI THE WHOLE TIME" with Facecam on top
+        # did nothing for that reason, while 31 other clips of the same video had the camera at one place whose
+        # border measured 55.7 in that clip. The box with the clearest border wins.
+        known = [tuple(job["facecam"])] if job.get("facecam") and len(job["facecam"]) == 4 else []
+        used = collections.Counter(tuple(c["facecam"]) for c in job.get("clips", [])
+                       if isinstance(c.get("facecam"), (list, tuple)) and len(c["facecam"]) == 4)
+        known += [b for b, _ in used.most_common(6) if b not in known]
+        if known:
+            frame = facecam._full_frame(src)
+            if frame is not None:
+                marks = [(facecam.border_strength(frame, b), b) for b in known]
+                best, box = max(marks)
+                if best >= facecam.BORDER:
+                    return [int(v) for v in box]
         box = facecam.detect(src)
         if box and box.get("conf") == "high":
             found = [box["x"], box["y"], box["w"], box["h"]]

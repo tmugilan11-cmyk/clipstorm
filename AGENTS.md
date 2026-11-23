@@ -391,3 +391,11 @@ Instagram or YouTube while the page said "posted". Now the uploaded file goes in
 in `platformSpecificData`, and a draft, a failure or a partial post with no link raises with the platform's reason.
 A post Zernio was still publishing gets its link (`platforms[].platformPostUrl`) or its failure from `zernio.status`
 on the next views pass. Checked by `tests/test_zernio_publish.py`.
+
+**A webcam is first looked for where the video's other clips found it.** `jobs._webcam_in` measures the border of
+the job's own box and of the boxes its clips carry (most used first) in the clip's own frame and takes the clearest
+one at `facecam.BORDER` or above; only then is the picture searched. The search tells a webcam apart by its stillness
+against a moving game, so a dark, still scene finds nothing: "IT WAS KSI THE WHOLE TIME" was re-made with Facecam on
+top and came out without the streamer, while 31 clips of the same video had the camera at one place (border 55.7
+in that clip). The editor's Look tab now shows `layout_note` when a clip was made without the streamer panel.
+Checked by `tests/test_webcam_known.py`.

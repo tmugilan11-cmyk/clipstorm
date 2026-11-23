@@ -3159,6 +3159,7 @@ function drawClipDlg(full) {
             <p class="ed-intro">Choose how the video sits in the tall frame, and add a big heading on top.</p>
             <h3 id="ed_look">Quick looks</h3>
             ${edPresets("layout", ED_LAYOUT_CARDS, layouts, "Quick looks for the layout")}
+            ${c.layout_note ? `<p class="hint" role="status" style="color:var(--bad)">${esc(c.layout_note)}</p>` : ""}
             <label class="f">Big heading<input data-f="hook" value="${esc(c.hook)}" maxlength="120" placeholder="A few words shown at the top"></label>
             <p class="hint">Shown over the top of the clip. Leave it empty for no heading.</p>
             <label class="f">Clip type<select data-f="format">

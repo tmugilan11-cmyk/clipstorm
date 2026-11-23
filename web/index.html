@@ -400,6 +400,11 @@ img.av{object-fit:cover}
 .composer.compact .tile-o{background:var(--muted)}
 .tile-o:enabled:hover,.tile-o:focus-visible{background:var(--brand-soft);color:var(--text)}
 .tile-o[aria-pressed=true]{background:var(--brand-soft);color:var(--text)}
+/* The chosen tile must look chosen everywhere: `.composer.compact .tile-o` is more specific than the line above and
+   painted every tile the same grey, so a click selected a look that nobody could see was selected. */
+.composer .tile-o[aria-pressed=true],.composer.compact .tile-o[aria-pressed=true]{background:var(--brand-soft) !important;color:var(--text);outline:2px solid var(--brand);outline-offset:-2px}
+.cap-prev.cap-pic{padding:0;height:auto;aspect-ratio:9/5;background:var(--field)}
+.cap-prev.cap-pic img{width:100%;height:100%;object-fit:cover;display:block}
 .cap-prev{height:54px;border-radius:7px;background:#1E1612;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;font-size:14px;line-height:1;color:#fff;letter-spacing:0;-webkit-text-stroke:1px #000;paint-order:stroke fill}
 .cap-prev b{font-weight:inherit}
 .lay-prev{height:54px;border-radius:7px;background:#1E1612;display:grid;place-items:center}
@@ -1784,7 +1789,11 @@ function focusNote() {
 const LAYOUT_SHORT = {blur:"Blurred fill", zoom:"Zoomed in", crop:"Fill screen", gameplay:"Gameplay + facecam",
   stack:"Streamer top, game below"};
 const CAP_LOOK = {bounce:{font:"'Archivo Black'", hl:"#FFFF00", up:true}, hype:{font:"Anton", hl:"#FF3C3C", up:true}, clean:{font:"Poppins", hl:"#6BD7FF", up:false, w:800}};
+/* Every caption look has a real picture of itself in web/looks/<name>.jpg (the server's own render of that look), so
+   each tile shows the look itself. Only a look with no picture falls back to the drawn text sample. */
+const LOOK_PICS = new Set(["beast", "bounce", "brainrot", "bubble", "butter-cozy", "classic", "clean", "comic", "cream-ink", "crimson", "drop", "duo", "duo-speaker", "ember", "emoji", "glow", "hollow", "hormozi", "hormozi-pro", "hype", "karaoke", "lemon", "lower", "lowercase-hook", "meme", "minimal", "mozi", "neon", "neon-pop", "pill", "pill-dark", "pop", "punch", "red-alert", "retro", "shake", "slide", "stamp", "sweep", "tiktok", "title-slide", "twotone", "typewriter", "whisper", "word"]);
 function capPrev(k) {
+  if (LOOK_PICS.has(k)) return `<span class="cap-prev cap-pic"><img src="/looks/${encodeURIComponent(k)}.jpg?v=2" alt="" loading="lazy" onerror="this.parentElement.classList.remove('cap-pic');this.remove()"></span>`;
   const s = CAP_LOOK[k] || {font:"inherit", hl:"#AF9BFF", up:true};
   const t = s.up ? ["CLIP", "THIS"] : ["Clip", "this"];
   return `<span class="cap-prev" style="font-family:${s.font},sans-serif;font-weight:${s.w || 400}">${t[0]}&nbsp;<b style="color:${s.hl}">${t[1]}</b></span>`;

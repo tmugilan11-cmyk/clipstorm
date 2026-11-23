@@ -463,7 +463,57 @@ def _decode_remote(pieces: list) -> list:
     return [(p["tokens"], p["timestamps"]) for p in got]
 
 
+def _fixes() -> dict:
+    """Words the speech engine keeps getting wrong on streams, and what was really said: {"chad": "chat"}.
+
+    `PEAKCUT_WORD_FIXES` is a list like "chad=chat, speeds=Speed's". The built-in one is the word every streamer
+    says all day: on one six-hour stream the engine wrote "chad" 268 times and "chat" 92 times."""
+    out = {}
+    for pair in str(config.env("PEAKCUT_WORD_FIXES", "chad=chat")).split(","):
+        heard, _, meant = pair.partition("=")
+        heard, meant = re.sub(r"[^a-z']", "", heard.lower()), meant.strip()
+        if heard and meant:
+            out[heard] = meant
+    return out
+
+
+_WORD = re.compile(r"^(\W*)(.*?)((?:'|’)s)?(\W*)$", re.S)
+
+
+def fix_words(words: list) -> list:
+    """Put right, in place, the words the engine is known to mishear. Timings are untouched.
+
+    The fixed word keeps the shape of what was heard: capitals stay capitals, a capital only survives at the
+    start of a sentence (the engine writes "Chad" as a name in the middle of one), "'s" and punctuation stay
+    where they were. "giga chad" is left alone."""
+    table = _fixes()
+    if not table or not words:
+        return words
+    before, first = "", True
+    for w in words:
+        text = str(w.get("w", ""))
+        m = _WORD.match(text)
+        core = (m.group(2) if m else text)
+        key = re.sub(r"[^a-z']", "", core.lower())
+        if m and key in table and before != "giga":
+            meant = table[key]
+            if core.isupper() and len(core) > 1:
+                meant = meant.upper()
+            elif first and core[:1].isupper():
+                meant = meant[:1].upper() + meant[1:]
+            w["w"] = m.group(1) + meant + (m.group(3) or "") + m.group(4)
+        before = key
+        first = text.rstrip()[-1:] in ".?!" if text.strip() else first
+    return words
+
+
 def transcribe(audio: np.ndarray, on_progress=None, quiet_ok: bool = False) -> list:
+    """What was said in this audio, as words with their times, with the engine's known mishearings put right.
+    See `_transcribe` for how it is heard."""
+    return fix_words(_transcribe(audio, on_progress, quiet_ok))
+
+
+def _transcribe(audio: np.ndarray, on_progress=None, quiet_ok: bool = False) -> list:
     """Returns [{'w': word, 's': start_sec, 'e': end_sec}, ...] for the whole audio.
     Speech is cut at quiet moments into 12-24 s pieces; silent pieces are skipped.
 

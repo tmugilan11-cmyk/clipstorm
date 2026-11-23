@@ -229,3 +229,9 @@ no saved webcam box: `jobs.render_one` now finds the webcam in the clip's own vi
 `layout_note` when there is none. A live clip whose pieces are gone is re-made from the stream's replay once the
 stream is over (`jobs._piece_again`): the replay's clock was measured against the recording's at three points and
 was within 0.03 s.
+
+**"Chat" is heard as "chad", so the transcript is put right as it arrives.** `transcribe.transcribe()` runs
+`fix_words` on whatever engine heard it: a table from `PEAKCUT_WORD_FIXES` (built in: `chad=chat`; add more as
+`heard=meant, ...`). Timings are untouched, capitals and "'s" keep their shape, "giga chad" is left alone. On the
+first whole-stream run the engine wrote "chad" 268 times and "chat" 92 times, and the judge then titled clips
+about "his friend Chad". Checked by `tests/test_word_fixes.py`.

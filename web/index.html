@@ -421,6 +421,28 @@ img.av{object-fit:cover}
 .range input,.range input:focus{flex:1;min-width:0;height:40px;border:0;background:transparent;padding:0;font-size:15px;font-weight:600;color:var(--text);-moz-appearance:textfield}
 .range>svg{width:14px;height:14px;color:var(--faint);flex:none}
 @media (max-width:640px){.og{grid-template-columns:1fr}.nsteps{grid-template-columns:1fr}}
+/* "What to look for", the idea chips, the length buttons, saved setups and the one-line summary */
+.composer-focus{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px 10px;padding:6px 18px 10px;border-top:1px solid var(--line)}
+.cf-l{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--dim);white-space:nowrap}
+.cf-l svg{width:16px;height:16px;color:var(--brand)}
+.composer-focus input,.composer-focus input:focus{height:36px;border:0;background:transparent;padding:0;font-size:14px;min-width:0}
+.cf-sug{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
+.cf-chip{height:26px;padding:0 10px;border:1px solid var(--line-2);border-radius:999px;background:transparent;color:var(--dim);font-size:12px;cursor:pointer;transition:background-color .15s ease,color .15s ease,border-color .15s ease}
+.cf-chip:hover,.cf-chip:focus-visible{background:var(--brand-soft);border-color:var(--brand-line);color:var(--text)}
+.cf-note{grid-column:1/-1;font-size:12px;color:var(--brand-deep);margin:0}
+.composer.compact .composer-focus{padding-left:14px}
+.seg.lens{flex-wrap:wrap}.seg.lens button{min-width:96px}
+.setups{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.setup{display:inline-flex;align-items:center;background:var(--bg);border-radius:999px}
+.composer.compact .setup{background:var(--muted)}
+.setup .chip{background:transparent;padding-right:4px}
+.setup-x{display:grid;place-items:center;width:26px;height:26px;margin-right:4px;border:0;border-radius:50%;background:transparent;color:var(--faint);cursor:pointer;transition:background-color .15s ease,color .15s ease}
+.setup-x svg{width:12px;height:12px}
+.setup-x:hover,.setup-x:focus-visible{background:var(--brand-soft);color:var(--text)}
+.setup-new{display:flex;gap:8px;align-items:center}
+.setup-new input{flex:1;min-width:0;height:34px;padding:0 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--bg);font-size:13px}
+.composer-sum{grid-column:1/-1;font-size:12px;color:var(--dim);padding:2px 4px 0}
+@media (max-width:640px){.composer-focus{grid-template-columns:1fr;padding:6px 14px 10px}.composer-focus input,.composer-focus input:focus{border-bottom:1px solid var(--line-2)}.setup-new{flex-wrap:wrap}.seg.lens button{min-width:calc(50% - 4px)}}
 
 /* ---------- home blocks */
 .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:16px}
@@ -591,6 +613,25 @@ button.tile:hover,button.tile:focus-visible{background:var(--brand-soft);border-
 .selck:hover{background:var(--brand-soft)}
 .selck input{width:16px;height:16px;accent-color:var(--brand);cursor:pointer;margin:0}
 .clip.picked{border-color:var(--brand)}
+/* project cards, the page's back row, keep / skip, and the little letter marks under a clip */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.pcard{display:flex;flex-direction:column;text-align:left;padding:0;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);cursor:pointer;overflow:hidden;transition:border-color .15s ease,background-color .15s ease}
+.pcard:hover,.pcard:focus-visible{border-color:var(--brand-line);background:var(--brand-soft)}
+.pc-pic{position:relative;display:grid;place-items:center;aspect-ratio:16/9;background:#17110E;color:var(--faint);overflow:hidden}
+.pc-pic img{width:100%;height:100%;object-fit:cover;display:block}
+.pc-pic .du{position:absolute;right:8px;bottom:8px;padding:1px 7px;border-radius:var(--r-sm);background:rgba(0,0,0,.72);color:#fff;font-size:12px;font-variant-numeric:tabular-nums}
+.pc-pic svg{width:28px;height:28px}
+.pc-tx{display:flex;flex-direction:column;gap:6px;padding:12px 14px 14px;min-width:0}
+.pc-tx>b{font-size:14px;font-weight:600;line-height:1.35;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pc-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12px;color:var(--dim)}
+.pc-sub{font-size:12px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-tx .bar{height:6px}
+.proj-back{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+.clip-rv{display:flex;gap:6px}
+.clip-rv .btn[aria-pressed=true]{background:var(--brand-soft);border-color:var(--brand-line);color:var(--brand-deep)}
+.clip.skipped .shot,.clip.skipped .clip-body>.hook{opacity:.45}
+.clip[data-rv=approved] .clip-rv .btn[data-v=approved]{background:var(--good-soft);border-color:transparent;color:var(--good)}
+.grades.sm{margin:0;gap:2px 10px}.grades.sm .gr{font-size:11px}.grades.sm .gr b{font-size:12px}
 #selbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:none;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;
   max-width:calc(100vw - 24px);padding:10px 12px 10px 18px;border-radius:14px;background:#18122C;color:#FFF4EA;font-size:14px;border:1px solid rgba(200,186,255,.25)}
 #selbar.on{display:flex}
@@ -752,9 +793,33 @@ dialog.wide{width:min(1560px,calc(100vw - 32px));max-width:min(1560px,calc(100vw
 .ed-more[open]{padding-bottom:12px;display:flex;flex-direction:column;gap:12px}
 .ed-more summary{cursor:pointer;color:var(--dim);font-weight:600;font-size:13px;padding:10px 0;list-style-position:inside}
 .ed-more summary:hover{color:var(--brand-deep)}
-@media (max-width:1180px){
-  .editor{grid-template-columns:minmax(260px,1fr) minmax(360px,440px)}
+/* ---- the clip editor, three zones like OpusClip's: what is said, the video, then a rail of tools */
+.editor{grid-template-columns:minmax(230px,300px) minmax(280px,1fr) minmax(420px,540px)}
+.ed-left{display:flex;flex-direction:column;gap:8px;padding:14px 14px 12px;background:var(--bg);border-right:1px solid var(--line);min-height:0;min-width:0;overflow:hidden}
+.ed-left-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ed-left-h h3{margin:0}
+.ed-left .hint{margin:0}
+.ed-left .ed-words{position:relative;display:block;flex:1;min-height:0;max-height:none;overflow:auto;border:0;background:transparent;padding:0 4px 0 0;font-size:14px;line-height:1.95;color:var(--text)}
+.ed-left .ed-w{display:inline;border:0;background:transparent;padding:2px 3px;margin:0;border-radius:5px;font-size:14px;line-height:1.95;color:var(--text)}
+.ed-left .ed-w{min-height:0;height:auto;vertical-align:baseline}
+.ed-left .ed-w .t{display:none}
+.ed-left .ed-w:hover{background:var(--brand-soft);color:var(--brand-deep)}
+.ed-left .ed-w.on{background:var(--brand-soft);color:var(--brand-deep)}
+.ed-left .ed-w.now{background:var(--brand);color:var(--brand-ink)}
+.grades{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px}
+.gr{display:inline-flex;align-items:baseline;gap:5px;font-size:12px;color:var(--dim)}
+.gr b{font-size:14px;font-weight:700}
+.g-hi{color:var(--good)}.g-mid{color:var(--brand-deep)}.g-lo{color:var(--dim)}
+@media (min-width:901px){
+  .editor .panel{display:grid;grid-template-columns:84px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto}
+  .editor .panel>.job-head{grid-column:1/-1;grid-row:1}
+  .editor .panel>.ed-railnav{grid-column:1;grid-row:2;flex-direction:column;flex-wrap:nowrap;align-content:flex-start;padding:12px 8px;border-bottom:0;border-right:1px solid var(--line);overflow:auto;min-height:0}
+  .editor .panel>.ed-railnav button{flex:none;min-width:0;width:100%}
+  .editor .panel>.ed-panes{grid-column:2;grid-row:2}
+  .editor .panel>.ed-foot{grid-column:1/-1;grid-row:3}
+  .editor .panel>:not(.job-head):not(.ed-railnav):not(.ed-panes):not(.ed-foot){grid-column:1/-1}
 }
+@media (max-width:1180px) and (min-width:901px){.editor{grid-template-columns:minmax(190px,240px) minmax(220px,1fr) minmax(400px,460px)}}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #toasts{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:8px;z-index:50}
 .toast{background:var(--frame);color:var(--frame-text);border:1px solid var(--frame-2);border-radius:var(--r);padding:12px 16px;max-width:min(380px,calc(100vw - 40px));animation:rise .2s ease;display:flex;gap:10px;align-items:center;font-weight:500}
@@ -905,6 +970,7 @@ dialog[open]{animation:fadein .16s ease}
   dialog.wide{width:calc(100vw - 16px);max-width:calc(100vw - 16px)}
   .editor{grid-template-columns:1fr;height:auto;max-height:none;overflow:auto}.editor video{max-height:52vh}
   .editor .stage{height:42vh;min-height:220px}
+  .editor .ed-left{order:2;flex:none;height:230px;border-right:0;border-top:1px solid var(--line)}.editor .stage{order:1}.editor .panel{order:3}
   .editor .stage,.editor .panel{overflow:visible;max-height:none}
   .editor .panel{border-left:0}
   .ed-railnav{padding:0 12px 10px;gap:4px}.ed-railnav button{min-width:56px}
@@ -1488,6 +1554,7 @@ const ROUTES = {overview: "", library: "videos", settings: "settings", review: "
 function pathFor(v, tab) {
   if (v.startsWith("c:")) return `/app/creators/${encodeURIComponent(v.slice(2))}${tab && tab !== "clips" ? "/" + tab : ""}`;
   if (v === "settings") return "/app/settings" + (tab ? "/" + tab : "");
+  if (v === "library" && tab && tab !== "clips") return "/app/videos/" + encodeURIComponent(tab);   // one project's own page
   // A page a feature file registered owns its own address.
   if (!ROUTES[v] && window.PeakCut && PeakCut.pagePath) { const p = PeakCut.pagePath(v); if (p) return p; }
   return "/app" + (ROUTES[v] ? "/" + ROUTES[v] : "");
@@ -1516,6 +1583,8 @@ function fromPath(path) {
   if (m) return ["c:" + decodeURIComponent(m[1]), m[2] || "clips"];
   const st = path.match(/^\/app\/settings(?:\/(ai|profile|security|apps|storage|transcribe|brand|tools))?\/?$/);
   if (st) return ["settings", st[1] || null];
+  const pj = plain.match(/^\/app\/videos\/([^/]+)$/);
+  if (pj) return ["library", decodeURIComponent(pj[1])];     // a project's own page; the id rides in the "tab" slot
   const k = Object.keys(ROUTES).find(x => ROUTES[x] && plain === "/app/" + ROUTES[x]);
   if (k) return [k, "clips"];
   // A page a feature file registered.
@@ -1531,7 +1600,7 @@ function remember(v, tab, how = "push") {
 // first thing a deep link does is get rewritten to the home page.
 function pathKnown(path) {
   const clean = String(path || "").replace(/\/$/, "");
-  if (clean === "/app" || clean === "/app/videos") return true;
+  if (clean === "/app" || clean === "/app/videos" || /^\/app\/videos\/[^/]+$/.test(clean)) return true;
   // Addresses that moved still work: fromPath sends them to their new page, so they are known.
   if (MADE_CLEAN[clean]) return true;
   if (/^\/app\/creators\/[^/]+(\/(setup|activity|clips))?$/.test(clean)) return true;
@@ -1545,7 +1614,7 @@ function go(v, tab, fromHistory) {
   if (v.startsWith("c:") && !S.creators.some(c => "c:" + c.id === v)) v = "overview";
   S.view = v; if (tab) S.ctab = tab; else if (!v.startsWith("c:")) S.ctab = "clips";
   if (v === "settings") S.stab = setTabs().some(x => x[0] === tab) ? tab : setTabs()[0][0];
-  if (!fromHistory) remember(v, v.startsWith("c:") ? S.ctab : v === "settings" ? S.stab : null);
+  if (!fromHistory) remember(v, v.startsWith("c:") || v === "library" ? S.ctab : v === "settings" ? S.stab : null);
   localStorage.setItem("view", v);
   $("#app").classList.remove("open");
   const view = $("#view");
@@ -1553,7 +1622,7 @@ function go(v, tab, fromHistory) {
   $("#heroSlot").innerHTML = v === "overview" ? `<section class="hero"><div class="ga-bg" id="appAscii" aria-hidden="true"></div><h2>What do you want to clip today?</h2>
       <p>Paste a link or drop in videos. You get captioned shorts back.</p><div id="add"></div></section>` : "";
   if (v === "overview") view.innerHTML = `<div id="ov"></div>`;
-  else if (v === "library") view.innerHTML = `<div id="add"></div><div id="jobs"></div>`;
+  else if (v === "library") view.innerHTML = projectId() ? `<div id="projhead"></div><div id="projbar"></div><div id="jobs"></div>` : `<div id="add"></div><div id="projects"></div>`;
   else if (v === "settings") view.innerHTML = `<div id="sform"></div>`;
   else if (v === "review") { view.innerHTML = `<div id="rvroot"></div>`; loadReview(); }
   // A page a feature file registered: it draws its own markup into #view.
@@ -1577,25 +1646,82 @@ function setTab(t) {
   render();
 }
 
+/* ============================================================ projects
+   Projects is two places. The first is a grid of cards, one per video or recording. A card opens that project's own
+   page (/app/videos/<id>), which is where its clips are listed best first, with a toolbar to narrow them
+   (web/feat/project-tools.js). The id of the open project rides in S.ctab while the view is "library". */
+function projectId() { return S.view === "library" && S.ctab && S.ctab !== "clips" ? S.ctab : ""; }
+const PF = {q: "", st: "all"};   // the card grid's own search and status pills; nothing is asked of the server
+function bestOf(j) { return (j.clips || []).reduce((m, c) => Math.max(m, Number(c.score) || 0), 0); }
+function projCard(j) {
+  const busy = j.status === "queued" || j.status === "running", live = j.status === "live", n = (j.clips || []).length;
+  const best = bestOf(j), ready = (j.clips || []).filter(c => c.status === "done").length;
+  const who = j.creator ? S.creators.find(c => c.id === j.creator)?.name : "";
+  const st = j.error ? `<span class="pill bad">Failed</span>` : live ? `<span class="pill live"><span class="dot"></span>Live</span>`
+    : busy ? `<span class="pill warn">${j.status === "queued" ? "Waiting its turn" : "Working"}</span>` : n ? `<span class="pill ok">Ready</span>` : `<span class="pill">No clips found</span>`;
+  const pic = j.thumb ? `<img src="/media/${esc(j.id)}/thumb.jpg" alt="" loading="lazy">` : ic(j.source?.type === "file" ? "film" : "link");
+  const pct = Math.round((j.progress || 0) * 100);
+  return `<button type="button" class="pcard" data-act="openproj" data-j="${esc(j.id)}" title="Open this project">
+    <span class="pc-pic">${pic}${j.duration ? `<span class="du">${fmt(j.duration)}</span>` : ""}${best ? `<span class="badge l ${scoreCls(best)}" title="Best score in this project">${best}/100</span>` : ""}</span>
+    <span class="pc-tx"><b>${esc(j.title || j.source?.name || "Untitled video")}</b>
+      <span class="pc-meta">${st}<span>${n} ${n === 1 ? "clip" : "clips"}${n && ready < n ? `, ${ready} ready` : ""}</span></span>
+      <span class="pc-sub">${esc([who, j.uploader, j.created ? when(j.created) : ""].filter(Boolean).join(" · "))}</span>
+      ${busy ? `<span class="bar"><i style="width:${pct}%"></i></span>` : ""}</span></button>`;
+}
+function drawProjects() {
+  const root = $("#projects"); if (!root) return;
+  const all = [...S.jobs].sort((a, b) => (b.created || 0) - (a.created || 0));
+  const isBusy = j => j.status === "queued" || j.status === "running" || j.status === "live";
+  const counts = {all: all.length, making: all.filter(isBusy).length, ready: all.filter(j => !isBusy(j) && !j.error && (j.clips || []).length).length, failed: all.filter(j => j.error).length};
+  const q = PF.q.trim().toLowerCase();
+  const show = all.filter(j => (PF.st === "all" || (PF.st === "making" ? isBusy(j) : PF.st === "failed" ? !!j.error : !isBusy(j) && !j.error && (j.clips || []).length))
+    && (!q || [j.title, j.uploader, j.source?.name, ...(j.clips || []).map(c => c.hook + " " + c.title)].join(" ").toLowerCase().includes(q)));
+  const pill = (k, l) => `<button type="button" class="pcf-pill" data-act="pfstate" data-st="${k}" aria-pressed="${PF.st === k}">${l} <b>${counts[k]}</b></button>`;
+  const keep = document.activeElement?.id === "pf_q";
+  put(root, `<div class="pcf-bar"><div class="pcf-pills">${pill("all", "All")}${pill("making", "Making")}${pill("ready", "Ready")}${pill("failed", "Failed")}</div>
+      <label class="pcf-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16" y1="16" x2="20" y2="20" stroke="currentColor" stroke-width="2"/></svg><input id="pf_q" type="search" value="${esc(PF.q)}" placeholder="Search videos and clips" aria-label="Search videos and clips"></label></div>
+    ${show.length ? `<div class="pgrid">${show.map(projCard).join("")}</div>`
+      : `<div class="empty"><img src="/brand/favicon.svg?v=4" alt=""><b>${all.length ? "Nothing matches" : "No videos yet"}</b>${all.length ? "Try another word, or press All." : "Paste a link above and Clipstorm will find the best moments and turn them into clips."}</div>`}`);
+  if (keep) { const i = $("#pf_q"); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
+}
+function drawProjHead() {
+  const box = $("#projhead"); if (!box) return;
+  const j = jobOf(projectId());
+  put(box, `<div class="proj-back"><button type="button" class="btn sm ghost" data-act="go" data-v="library" data-tab="clips">${ic("arrowr").replace("<svg", '<svg style="transform:scaleX(-1)"')}All projects</button>${j ? "" : `<span class="sub">That video is not here any more. It may have been deleted.</span>`}</div>`);
+}
+
 /* ============================================================ add bar */
 function drawAdd(variant) {
   const c = creator();
+  const sugg = ["The funniest reactions", "Someone getting trolled or caught off guard", "Rage, screaming or a big shock", "A clutch play or a big win", "A hot take or a heated argument", "A story with a punchline"];
   $("#add").innerHTML = `<form class="composer ${variant === "hero" ? "big" : "compact"}" id="addform">
     <div class="composer-input">${ic("link")}<input id="url" placeholder="Drop a video link (YouTube, Twitch or Kick)" autocomplete="off" aria-label="Video link"></div>
     <div class="att" id="att"><div><div class="att-in" id="attIn"></div></div></div>
+    <div class="composer-focus"><label class="cf-l" for="o_focus">${ic("wand")}<span>What to look for</span></label>
+      <input id="o_focus" maxlength="300" autocomplete="off" value="${esc(c?.clip_focus || "")}" placeholder="Optional. In your own words, like: the funniest reactions">
+      <div class="cf-sug" role="group" aria-label="Ideas for what to look for">${sugg.map(t => `<button type="button" class="cf-chip" data-focus="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+      <p class="cf-note" id="cf_note" hidden></p></div>
     <div class="composer-bar">
       <button type="button" class="chip" data-act="pickfile">${ic("up")}Upload</button>
       ${c ? "" : picker("o_creator", "File under creator", [{v:"", label:"No creator", icon:"user"}, ...S.creators.map(x => ({v:x.id, label:x.name, img:x.profile?.pic && x.profile.channel === x.channel ? avatarUrl(x) : ""}))], "")}
-      <button type="button" class="chip" data-act="toggleopts" aria-expanded="false">${ic("sliders")}Options</button>
+      <button type="button" class="chip" data-act="toggleopts" aria-expanded="false">${ic("sliders")}Settings</button>
       <span class="grow"></span><span class="hint">or drop a video file here</span>
       <button class="btn primary" id="goBtn">${ic("scissors")}Get clips</button>
     </div>
     <div class="composer-opts" inert><div class="og">
-      <div class="ob wide"><div class="ot">Clips</div><div class="nsteps">
-        ${stepper("o_max", "How many", c?.max_clips ?? 6, 1, 20, 1, "")}
-        ${stepper("o_min", "Shortest", c?.min_len ?? 15, 5, 120, 5, "s")}
-        ${stepper("o_maxlen", "Longest", c?.max_len ?? 60, 10, 180, 5, "s")}
-      </div></div>
+      <div class="ob wide"><div class="ot">How long should each clip be?</div>
+        <div class="seg lens" role="group" aria-label="Clip length">${LENGTHS.map(([k, l, s]) => `<button type="button" data-len="${k}" aria-pressed="false">${l}<small>${s}</small></button>`).join("")}</div>
+        <div class="nsteps" style="margin-top:10px">
+          ${stepper("o_max", "How many", c?.max_clips ?? 6, 1, 20, 1, "")}
+          ${stepper("o_min", "Shortest", c?.min_len ?? 15, 5, 120, 5, "s")}
+          ${stepper("o_maxlen", "Longest", c?.max_len ?? 60, 10, 180, 5, "s")}
+        </div></div>
+      <div class="ob wide"><div class="ot">What kind of clip?</div>
+        <input type="hidden" id="o_format" value="">
+        <div class="seg kinds" role="group" aria-label="Kind of clip">
+          <button type="button" data-seg="o_format" data-v="" aria-pressed="true">Normal<small>The moment as it is</small></button>
+          <button type="button" data-seg="o_format" data-v="waitforit" aria-pressed="false">Wait for it<small>Bar fills, then a flash</small></button>
+          <button type="button" data-seg="o_format" data-v="reveal" aria-pressed="false">Reveal<small>Needs the streamer's webcam</small></button></div></div>
       <div class="ob"><div class="ot cap-head"><span id="o_style_label">Caption style</span>
         <label><input type="checkbox" id="o_captions" data-caption-toggle ${c?.captions === false ? "" : "checked"}>Generate captions</label></div>
         ${choice("o_style", Object.entries(S.status.styles).map(([k, v]) => ({v:k, label:v, prev:capPrev(k)})), c?.style ?? "bounce", c?.captions === false)}</div>
@@ -1606,8 +1732,54 @@ function drawAdd(variant) {
       <div class="ob"><div class="ot">Part of the video</div><div class="range">
         <label>From<input id="o_from" type="number" min="0" placeholder="start" aria-label="From minute">min</label>${ic("arrowr")}
         <label>To<input id="o_to" type="number" min="0" placeholder="end" aria-label="Up to minute">min</label></div></div>
+      <div class="ob wide"><div class="ot">Saved setups</div>
+        <div class="setups" id="setups"></div>
+        <div class="setup-new"><input id="setup_name" maxlength="40" placeholder="Name this setup, like: Funny shorts" aria-label="Name for this setup" autocomplete="off">
+          <button type="button" class="btn sm" data-act="savesetup">${ic("plus")}Save these settings</button></div>
+        <p class="hint" style="margin:6px 0 0">A saved setup keeps the length, kind, captions, layout and quality for next time. It stays in this browser.</p></div>
+      <p class="composer-sum" id="o_sum" aria-live="polite"></p>
     </div></div></form>`;
-  drawAtt();
+  drawAtt(); drawSetups(); sumOpts(); focusNote();
+}
+// Clip lengths people ask for. Each one only fills the Shortest and Longest boxes, so the numbers stay visible and editable.
+const LENGTHS = [["auto", "Auto", "15 to 60 s", 15, 60], ["u30", "Under 30 s", "10 to 30 s", 10, 30], ["m30", "30 to 60 s", "30 to 60 s", 30, 60], ["m60", "60 to 90 s", "60 to 90 s", 60, 90], ["m90", "90 s to 3 min", "90 to 180 s", 90, 180]];
+const SETUPS_KEY = "peakcut_setups";
+function getSetups() { try { const v = JSON.parse(localStorage.getItem(SETUPS_KEY) || "[]"); return Array.isArray(v) ? v.filter(x => x && x.name && x.o) : []; } catch { return []; } }
+function putSetups(list) { try { localStorage.setItem(SETUPS_KEY, JSON.stringify(list.slice(0, 12))); } catch { toast("This browser would not keep the setup.", "bad"); } }
+function drawSetups() {
+  const box = $("#setups"); if (!box) return;
+  const list = getSetups();
+  box.innerHTML = list.length ? list.map((x, i) => `<span class="setup"><button type="button" class="chip" data-act="usesetup" data-i="${i}" title="Use this setup">${esc(x.name)}</button><button type="button" class="setup-x" data-act="delsetup" data-i="${i}" aria-label="Forget ${esc(x.name)}" title="Forget this setup">${ic("x")}</button></span>`).join("")
+    : `<p class="hint" style="margin:0">None yet. Set things up above, then name it and save it.</p>`;
+}
+// What the settings area holds right now, in the same words jobOptions() sends.
+function readOpts() {
+  const v = id => $("#" + id)?.value ?? "";
+  return {max: v("o_max"), min: v("o_min"), maxlen: v("o_maxlen"), format: v("o_format"), captions: !!$("#o_captions")?.checked, style: v("o_style"), layout: v("o_layout"), quality: v("o_quality")};
+}
+function applyOpts(o) {
+  const set = (id, val) => { const i = $("#" + id); if (i && val != null) i.value = val; };
+  set("o_max", o.max); set("o_min", o.min); set("o_maxlen", o.maxlen);
+  for (const [id, val] of [["o_format", o.format], ["o_style", o.style], ["o_layout", o.layout], ["o_quality", o.quality]]) {
+    if (val == null) continue; set(id, val);
+    $$(`[data-seg="${id}"]`).forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(val))));
+  }
+  const cap = $("#o_captions"); if (cap && o.captions != null) { cap.checked = !!o.captions; cap.dispatchEvent(new Event("change", {bubbles: true})); }
+  sumOpts();
+}
+function sumOpts() {
+  const out = $("#o_sum"); if (!out) return;
+  const o = readOpts(), kinds = {"": "clips", waitforit: "Wait for it clips", reveal: "Reveal clips"};
+  const st = S.status.styles?.[o.style], ly = LAYOUT_SHORT[o.layout] || S.status.layouts?.[o.layout] || o.layout;
+  out.textContent = `Up to ${o.max || 6} ${kinds[o.format] || "clips"}, ${o.min || 15} to ${o.maxlen || 60} seconds each. ${o.captions ? "Captions: " + (st || o.style) + "." : "No captions."} Layout: ${ly}. ${o.quality}p.`;
+  const m = LENGTHS.find(x => String(x[3]) === String(o.min) && String(x[4]) === String(o.maxlen));
+  $$("[data-len]").forEach(b => b.setAttribute("aria-pressed", String(!!m && b.dataset.len === m[0])));
+}
+function focusNote() {
+  const n = $("#cf_note"), f = $("#o_focus"); if (!n || !f) return;
+  const need = f.value.trim() && !creatorId() && !$("#o_creator")?.value;
+  n.hidden = !need;
+  n.textContent = need ? "To use this, choose a creator below. It is kept on that creator and used for each of their videos until you change it." : "";
 }
 const LAYOUT_SHORT = {blur:"Blurred fill", zoom:"Zoomed in", crop:"Fill screen", gameplay:"Gameplay + facecam",
   stack:"Streamer top, game below"};
@@ -1718,8 +1890,26 @@ function jobOptions() {
   const o = {max_clips:n("#o_max"), min_len:n("#o_min"), max_len:n("#o_maxlen"), captions:$("#o_captions").checked, style:$("#o_style").value, layout:$("#o_layout").value, quality:n("#o_quality")};
   if (n("#o_from") !== null) o.range_start = n("#o_from") * 60;
   if (n("#o_to") !== null) o.range_end = n("#o_to") * 60;
+  if ($("#o_format")?.value) o.format = $("#o_format").value;   // "Wait for it" or "Reveal"; empty means the normal clip
   return o;
 }
+// The settings area explains itself: the length buttons fill the two boxes, the idea chips fill the "what to look for"
+// box, and the one-line summary is rewritten after anything changes.
+document.addEventListener("click", e => {
+  const len = e.target.closest("[data-len]");
+  if (len) { const m = LENGTHS.find(x => x[0] === len.dataset.len); if (m) { $("#o_min").value = m[3]; $("#o_maxlen").value = m[4]; } }
+  const chip = e.target.closest("[data-focus]");
+  if (chip) { const f = $("#o_focus"); if (f) { f.value = chip.dataset.focus; f.focus(); focusNote(); } }
+  if (e.target.closest("#addform")) setTimeout(() => { sumOpts(); focusNote(); }, 0);
+});
+document.addEventListener("input", e => { if (e.target.closest?.("#addform")) { sumOpts(); if (e.target.id === "o_focus") focusNote(); } });
+document.addEventListener("change", e => {
+  if (e.target.id === "o_creator") {     // a creator's own words come with them; never overwrite what was just typed
+    const f = $("#o_focus"), cr = S.creators.find(x => x.id === e.target.value);
+    if (f && cr && !f.value.trim()) f.value = cr.clip_focus || "";
+  }
+  if (e.target.closest?.("#addform")) { sumOpts(); focusNote(); }
+});
 /* ---------- attachments: nothing starts until Make clips is pressed.
    Each page keeps its own draft (Home, All videos and every creator), so a link typed for one creator never
    shows up under another. Links move out of the box into the list as soon as they are recognised. */
@@ -1831,6 +2021,7 @@ function onLink(input) {
   linkTimer = setTimeout(() => { if (input.value.trim() === u) takeLink(A, u, input); }, 900);   // other link shapes: take it once typing stops
 }
 document.addEventListener("input", e => { if (e.target.id === "url") onLink(e.target);
+  if (e.target.id === "pf_q") { PF.q = e.target.value; drawProjects(); }
   if (e.target.id && e.target.id.startsWith("br_") && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) brPreviewSoon();
   if (e.target.closest?.("#cform") && e.target.dataset.k && !/checkbox|radio/.test(e.target.type)) dirty(true); });
 document.addEventListener("keydown", e => { if (e.target.id === "url" && e.key === "Enter" && e.target.value.trim() && looksLink(e.target.value.trim())) { e.preventDefault(); clearTimeout(linkTimer); takeLink(att(), e.target.value.trim(), e.target); } });
@@ -1915,9 +2106,18 @@ async function makeClips() {
     $("#url")?.focus();
     return;
   }
+  const who = targetCreator(), opts = jobOptions();
+  // "What to look for" is kept on the creator, because that is where the clip judge reads it. Without a creator
+  // there is nowhere to keep it, so say so instead of quietly ignoring the words.
+  const wish = $("#o_focus")?.value.trim() || "";
+  const had = S.creators.find(x => x.id === who)?.clip_focus || "";
+  if (wish && !who) { toast("To use \"What to look for\", choose a creator under the box first. Or clear the words to go on without them.", "bad"); focusNote(); return; }
+  if (who && wish !== had) {
+    try { await send(`/api/creators/${encodeURIComponent(who)}`, {clip_focus: wish}, "PUT"); const cr = S.creators.find(x => x.id === who); if (cr) cr.clip_focus = wish; }
+    catch (e) { toast("Could not keep your words for this creator: " + e.message, "bad"); return; }
+  }
   A.busy = true; drawAtt();
   let started = 0, failed = 0;
-  const who = targetCreator(), opts = jobOptions();
   for (const l of A.links.filter(x => x.state === "ok")) {
     l.sending = true; drawAtt();
     try { await send("/api/jobs", {url: l.url, options: opts, creator: who}); l.state = "done"; started++; }
@@ -1941,6 +2141,16 @@ async function makeClips() {
 
 /* ============================================================ clips + jobs */
 function scoreCls(s) { return s >= 80 ? "s-hi" : s >= 60 ? "s-mid" : ""; }
+/* The judge marks each clip out of 10 on hook, payoff, emotion and share. Shown as letters so a person can see
+   WHY a clip scored what it did, the way OpusClip shows Hook / Flow / Value / Trend. A clip picked by hand has no marks. */
+const GRADE = n => n >= 9 ? "A" : n >= 8 ? "A-" : n >= 7 ? "B" : n >= 6 ? "B-" : n >= 5 ? "C" : "D";
+function scoreGrades(c, small) {
+  const r = c && c.rubric; if (!r || typeof r !== "object") return "";
+  const rows = [["Hook", r.hook_score], ["Payoff", r.payoff], ["Emotion", r.emotion], ["Share", r.share]].filter(x => x[1] != null && Number.isFinite(Number(x[1])));
+  if (!rows.length) return "";
+  return `<div class="grades${small ? " sm" : ""}" role="list" aria-label="How the score was marked">${rows.map(([k, v]) =>
+    `<span class="gr" role="listitem" title="${k}: ${Number(v)} out of 10"><b class="${Number(v) >= 8 ? "g-hi" : Number(v) >= 6 ? "g-mid" : "g-lo"}">${GRADE(Number(v))}</b>${k}</span>`).join("")}</div>`;
+}
 function postPills(c) {
   return Object.values(c.posts || {}).filter(p => p.status !== "cancelled").map(p => {
     const cls = p.status === "posted" ? "ok" : p.status === "failed" ? "bad" : "warn";
@@ -1960,14 +2170,17 @@ function clipHtml(j, c) {
     : c.status === "error" ? `<span class="making" style="animation:none;color:var(--bad);background:var(--bad-soft)">Could not make this clip. Open it to try again.</span>`
     : `<span class="making">${c.status === "rendering" ? "Making this clip…" : "Waiting its turn…"}</span>`;
   const key = `c:${j.id}:${c.id}`, busyClip = c.status === "queued" || c.status === "rendering";
-  return `<article class="clip ${sel().has(key) ? "picked" : ""}">
+  const rv = c.review === "approved" || c.review === "rejected" ? c.review : "";
+  return `<article class="clip ${sel().has(key) ? "picked" : ""}${rv === "rejected" ? " skipped" : ""}" data-score="${Number(c.score) || 0}" data-len="${Math.round((c.end - c.start) || 0)}" data-at="${Math.round(Number(c.src_offset ?? c.start) || 0)}" data-cat="${esc(c.category || "")}" data-rv="${rv}">
     <button class="shot" data-act="openclip" ${a} aria-label="Open clip: ${esc(c.title || c.hook)}">${body}
       <span class="badge l ${scoreCls(c.score)}" title="Virality score" aria-label="Virality score ${c.score || 0} out of 100">${c.score ? c.score + "/100" : "Hand"}</span><span class="badge r">${fmt(c.end - c.start)}</span></button>
     <div class="clip-body">
       <div class="hook" title="${esc(c.hook || "")}">${esc(c.hook || "Untitled clip")}</div>
+      ${scoreGrades(c, true)}
       ${c.reason ? `<div class="why" title="${esc("Why it was picked: " + c.reason)}">${esc(c.reason)}</div>` : ""}
       ${c.title && c.title !== c.hook ? `<div class="ttl">${esc(c.title)}</div>` : ""}
       ${postPills(c) ? `<div class="row" style="gap:4px">${postPills(c)}</div>` : ""}
+      ${c.status === "done" ? `<div class="clip-rv" role="group" aria-label="Keep or skip this clip"><button type="button" class="btn sm" data-act="rvset" data-v="approved" ${a} aria-pressed="${rv === "approved"}" title="Keep this clip. It can be posted.">${ic("check")}Keep</button><button type="button" class="btn sm" data-act="rvset" data-v="rejected" ${a} aria-pressed="${rv === "rejected"}" title="Skip this clip. It will never be posted.">${ic("x")}Skip</button></div>` : ""}
       ${c.status === "done" ? `<div class="clip-acts"><button class="btn sm pq" data-act="openclip" ${a}>${ic("sliders")}Edit</button><a class="btn sm" href="${m}${esc(c.file)}?download=1" title="Download" aria-label="Download">${ic("down")}<span class="lbl">Download</span></a><button class="btn sm" data-act="openclip" ${a}>${ic("send")}Post</button></div>` : ""}
       <div class="clip-foot">
         ${busyClip ? "" : `<label class="selck" title="Select this clip"><input type="checkbox" data-sel="${key}" ${sel().has(key) ? "checked" : ""} aria-label="Select this clip"></label>`}
@@ -2058,6 +2271,7 @@ function drawSelBar() {
   if (!n) return;
   put(bar, `<b>${n} selected</b>
     <button class="btn sm" data-act="selall">Select all</button>
+    <button class="btn sm" data-act="selpost" ${dl ? "" : "disabled"} title="Add the selected clips to the post queue">${ic("send")}Post</button>
     <button class="btn sm primary" data-act="seldl" ${dl ? "" : "disabled"}>${ic("down")}Download${dl ? ` ${dl} clip${dl === 1 ? "" : "s"}` : ""}</button>
     <button class="btn sm danger" data-act="seldel">${ic("trash")}Delete</button>
     <button class="btn sm" data-act="selclear">Cancel</button>`);
@@ -2067,6 +2281,29 @@ function zipDownload(ids) {
   if (ids.length > 150) return toast("That is a lot at once. Download up to 150 clips at a time.", "bad");
   toast(ids.length === 1 ? "Preparing your clip…" : `Preparing ${ids.length} clips as one download…`, "ok");
   const a = document.createElement("a"); a.href = "/api/clips.zip?ids=" + encodeURIComponent(ids.join(",")); a.download = ""; document.body.append(a); a.click(); a.remove();
+}
+// Several clips to the post queue in one go. Each clip is queued the same way the editor's "Add to queue" does it; the
+// server then spaces the posts out by itself, so they do not all go at once. A clip that was skipped is never queued.
+function postSelected() {
+  const ids = selClips().map(k => { const i = k.indexOf("."); return [k.slice(0, i), k.slice(i + 1)]; });
+  const ok = ids.filter(([j, c]) => jobOf(j)?.clips.find(x => x.id === c)?.review !== "rejected");
+  if (!ok.length) return toast(ids.length ? "Every selected clip was skipped, and a skipped clip is never posted." : "Select clips that are ready first.", "bad");
+  if (!S.accounts.length) return toast("No accounts are connected yet. Connect one under Connected apps first.", "bad");
+  const d = $("#formdlg"), skipped = ids.length - ok.length;
+  d.innerHTML = `<form method="dialog" class="dlg"><h2>Post ${ok.length} clip${ok.length === 1 ? "" : "s"}</h2>
+    <p class="help">Choose where they go. Clipstorm adds them to the post queue and spaces them out by itself, so they do not all go at once.${skipped ? ` ${skipped} skipped clip${skipped === 1 ? " is" : "s are"} left out.` : ""}</p>
+    <div class="row" style="flex-direction:column;align-items:flex-start;gap:8px">${S.accounts.map(a => `<label class="ck"><input type="checkbox" data-bacc value="${esc(a.id)}">${esc(a.label)} · ${esc(a.name)}</label>`).join("")}</div>
+    <div class="dlg-foot"><button class="btn" value="no">Cancel</button><button class="btn primary" value="yes" id="bpostok" disabled>Add to queue</button></div></form>`;
+  d.onchange = e => { if (e.target.matches("[data-bacc]")) $("#bpostok").disabled = !d.querySelector("[data-bacc]:checked"); };
+  d.onclose = async () => {
+    if (d.returnValue !== "yes") return;
+    const accounts = [...d.querySelectorAll("[data-bacc]:checked")].map(x => x.value);
+    let made = 0, failed = 0;
+    for (const [j, c] of ok) { try { await send("/api/posts", {job: j, clip: c, accounts, now: false}); made++; } catch { failed++; } }
+    sel().clear(); await tick(); render();
+    toast(made ? `${made} clip${made === 1 ? " is" : "s are"} in the post queue.${failed ? ` ${failed} could not be added; they may already be queued there.` : ""}` : "Nothing was queued. Those clips may already be going to that account.", made ? "ok" : "bad");
+  };
+  d.returnValue = "no"; d.showModal();
 }
 function askTyped(title, text, mustType, okLabel) {
   return new Promise(res => {
@@ -2083,6 +2320,7 @@ function drawJobs() {
   const root = $("#jobs"); if (!root) return;
   const cid = creatorId();
   let list = cid ? S.jobs.filter(j => j.creator === cid) : S.jobs;
+  if (projectId()) list = list.filter(j => j.id === projectId());   // a project's own page shows that one project
   const liveBox = $("#live");
   if (liveBox) { const lj = list.find(j => j.status === "live");
     if (!liveBox.querySelector(".pick.open")) put(liveBox, lj ? liveHtml(lj) : "");  // don't redraw under an open menu
@@ -2228,7 +2466,7 @@ function drawOverview() {
     const busy = j.status === "queued" || j.status === "running", n = (j.clips || []).length;
     const st = j.error ? `<span class="pill bad">Failed</span>` : j.status === "live" ? `<span class="pill live"><span class="dot"></span>Live</span>`
       : busy ? `<span class="pill warn">${j.status === "queued" ? "Waiting its turn" : esc(j.stage || "Working")}</span>` : n ? `<span class="pill ok">${n} ${n === 1 ? "clip" : "clips"}</span>` : `<span class="pill">No clips</span>`;
-    return `<button type="button" class="rp" data-act="go" data-v="library" title="Open Projects"><span class="rp-pic">${j.thumb ? `<img src="/media/${esc(j.id)}/thumb.jpg" alt="" loading="lazy">` : ic("film")}</span>
+    return `<button type="button" class="rp" data-act="openproj" data-j="${esc(j.id)}" title="Open this project"><span class="rp-pic">${j.thumb ? `<img src="/media/${esc(j.id)}/thumb.jpg" alt="" loading="lazy">` : ic("film")}</span>
       <span class="rp-tx"><b>${esc(j.title || j.source?.name || "Untitled video")}</b>${st}${busy ? `<span class="bar"><i style="width:${Math.round((j.progress || 0) * 100)}%"></i></span>` : ""}</span></button>`;
   }).join("");
   put(box, `<p class="sub ov-line">Best moments, captions and a virality score out of 100 for every short.</p><div class="how" aria-label="How Clipstorm works"><div class="steps across">
@@ -2891,9 +3129,15 @@ function drawClipDlg(full) {
     const dur = Number(j.duration) || Number(c.end) || 0;
     const styles = S.status.styles || {}, layouts = S.status.layouts || {};
     dlg.innerHTML = `<div class="editor">
+      <aside class="ed-left" aria-label="What is said in this clip">
+        <div class="ed-left-h"><h3>What is said</h3><span class="ed-time" id="ed_time">0:00</span></div>
+        <p class="hint">Click a word to jump the video to it. The word being said is lit up as the clip plays.</p>
+        <div class="ed-words" id="ed_words"><span class="ed-empty">Reading the words…</span></div>
+      </aside>
       <div class="stage" id="stage">${stage}</div>
       <div class="panel">
-        <div class="job-head" style="margin:0"><div><span class="badge ${scoreCls(c.score)}" style="position:static">${c.score ? "Score " + c.score + " of 100" + (c.rubric ? " · hook " + c.rubric.hook_score + "/10 · reaction " + c.rubric.emotion + "/10" : "") : "Clipped by hand"}</span>
+        <div class="job-head" style="margin:0"><div><span class="badge ${scoreCls(c.score)}" style="position:static">${c.score ? "Score " + c.score + " of 100" : "Clipped by hand"}</span>
+          ${scoreGrades(c)}
           <p class="sub" style="margin-top:8px">${esc(c.reason || "")}</p></div><button class="btn icon ghost" data-act="closedlg" aria-label="Close">${ic("x")}</button></div>
         <div class="ed-railnav" role="tablist" aria-label="Edit this clip in five steps"><button type="button" role="tab" data-pane="look" id="ed_tab_look" aria-selected="false" tabindex="-1">${ic("palette")}<span>Look</span></button><button type="button" role="tab" data-pane="pics" id="ed_tab_pics" aria-selected="false" tabindex="-1" hidden><span>Pictures</span></button><button type="button" role="tab" data-pane="trim" id="ed_tab_trim" aria-selected="false" tabindex="-1">${ic("scissors")}<span>Cut</span></button><button type="button" role="tab" data-pane="sound" id="ed_tab_sound" aria-selected="false" tabindex="-1">${ic("music")}<span>Sound</span></button><button type="button" role="tab" data-pane="text" id="ed_tab_text" aria-selected="false" tabindex="-1">${ic("send")}<span>Post</span></button><button type="button" role="tab" data-pane="more" id="ed_tab_more" aria-selected="false" tabindex="-1">${ic("chat")}<span>Captions</span></button><button type="button" role="tab" data-pane="post" id="ed_tab_post" aria-selected="false" tabindex="-1" hidden><span>Where it goes</span></button></div>
         <div class="ed-panes">
@@ -2981,9 +3225,7 @@ function drawClipDlg(full) {
             <details class="ed-more"><summary>All caption looks</summary>
               <label class="f">Caption look<select data-f="style" data-caption-style ${c.captions === false ? "disabled" : ""}>${opts(S.status.styles, c.style)}</select></label>
             </details>
-            <h3>The words<span class="ed-time" id="ed_time">${mmss(Math.max(0, c.start || 0))}</span></h3>
-            <p class="hint">Tap a word to jump the video there.</p>
-            <div class="ed-words" id="ed_words"><span class="ed-empty">Reading the words…</span></div>
+            <p class="hint">The words are on the left of the video. Click one there to jump to it.</p>
             <details class="ed-more"><summary>More options</summary>
               <h3>Captions in another language</h3>
               <p class="hint">The same words, in a language you pick. Nothing is re-made until you press re-make below.</p>
@@ -3065,7 +3307,18 @@ function wireEditor(j, c) {
     box.querySelectorAll(".ed-w.on").forEach((x) => x.classList.remove("on"));
     b.classList.add("on");
   });
-  const tick = () => { const v = vid(); if (v && stamp) stamp.textContent = mmss(v.currentTime); };
+  // The word being said is lit while the clip plays, and the list scrolls to keep it in view.
+  let nowAt = -1;
+  const tick = () => {
+    const v = vid(); if (!v) return;
+    if (stamp) stamp.textContent = mmss(v.currentTime);
+    const ws = $$("#ed_words .ed-w"); if (!ws.length) return;
+    let at = -1; for (let i = 0; i < ws.length; i++) { if ((Number(ws[i].dataset.s) || 0) <= v.currentTime + 0.05) at = i; else break; }
+    if (at === nowAt) return;
+    ws[nowAt]?.classList.remove("now"); nowAt = at;
+    if (at >= 0) { const w = ws[at], b = w.parentElement; w.classList.add("now");
+      if (w.offsetTop < b.scrollTop + 8 || w.offsetTop + w.offsetHeight > b.scrollTop + b.clientHeight - 8) b.scrollTop = Math.max(0, w.offsetTop - b.clientHeight / 3); }
+  };
   dlg.addEventListener("timeupdate", tick, true);
   dlg.addEventListener("seeked", tick, true);
 
@@ -3204,7 +3457,7 @@ $("#clipdlg").addEventListener("click", e => { if (e.target === e.currentTarget)
 
 /* ============================================================ render + polling */
 function render() {
-  drawShell(); drawJobs(); drawStream(); drawSelBar();
+  drawShell(); drawJobs(); drawProjects(); drawProjHead(); drawStream(); drawSelBar();
   if (S.view === "overview") drawOverview();
   if (S.view === "review") drawReview();
   if ($("#clog")) drawLog();
@@ -3431,6 +3684,24 @@ document.addEventListener("click", async e => {
     if (a === "collapse") { const m = $("#app").classList.toggle("mini"); try { localStorage.setItem("mini", m ? "1" : ""); } catch {} return; }
     if (a === "toggleopts") { const p = $(".composer-opts"), open = !p.classList.contains("open"); p.classList.toggle("open", open); p.inert = !open; b.classList.toggle("on", open); b.setAttribute("aria-expanded", String(open)); return; }
     if (a === "focusurl") return $("#url")?.focus();
+    if (a === "openproj") return go("library", d.j);
+    if (a === "pfstate") { PF.st = d.st; return drawProjects(); }
+    if (a === "rvset") {
+      const j = jobOf(d.j), c = j?.clips.find(x => x.id === d.c); if (!c) return;
+      try { await send(`/api/jobs/${encodeURIComponent(d.j)}/clips/${encodeURIComponent(d.c)}`, {review: d.v}, "PATCH"); c.review = d.v; render(); tick(); }
+      catch (err) { toast("Could not save that choice: " + err.message, "bad"); }
+      return;
+    }
+    if (a === "selpost") return postSelected();
+    if (a === "savesetup") {
+      const nameBox = $("#setup_name"), name = nameBox?.value.trim();
+      if (!name) { toast("Give the setup a name first.", "bad"); nameBox?.focus(); return; }
+      const list = getSetups().filter(x => x.name.toLowerCase() !== name.toLowerCase());
+      list.unshift({name, o: readOpts()}); putSetups(list); nameBox.value = ""; drawSetups();
+      toast(`Saved the setup "${name}".`, "ok"); return;
+    }
+    if (a === "usesetup") { const x = getSetups()[Number(d.i)]; if (x) { applyOpts(x.o); toast(`Using "${x.name}".`, "ok"); } return; }
+    if (a === "delsetup") { const list = getSetups(); list.splice(Number(d.i), 1); putSetups(list); drawSetups(); return; }
     if (a === "step") {
       const t = d.to;
       if (t === "newcreator") return $('[data-act="newcreator"]').click();

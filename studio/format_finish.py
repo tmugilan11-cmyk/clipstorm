@@ -4,8 +4,10 @@
 pass over the finished 1080x1920 file, the same way `jobs._add_pictures` adds pictures. Nothing here can lose a
 clip: when anything goes wrong the file is left exactly as it was and the reason comes back in `skipped`.
 
-Shapes that join several separate moments (Callback, Compilation, Escalation, Then vs now) are not drawn here, because
-one rendered clip has only one moment in it."""
+Shapes that join several separate moments (Callback, Compilation, Escalation, Then vs now) are not drawn onto one
+finished clip, because one rendered clip has only one moment in it. `studio/montage.py` renders every moment as its own
+clip and joins them; this file only supplies the drawing of the joined timeline (`build_join_ass`: the numbered
+cards, the badges while each part plays, and the flash at every join)."""
 from __future__ import annotations
 
 import shutil
@@ -72,6 +74,85 @@ def build_ass(plan: dict, length: float) -> str:
             y = int(c.get("y") or formats.CHAT_YB) - (formats.CHAT_MAX - 1 - n) * int(c.get("step") or formats.CHAT_ROW)
             rows.append(f"Dialogue: 3,{_t(t0)},{_t(t1)},Tag,,0,0,0,,{{\\an4\\pos({c.get('x', formats.CHAT_X)},{y})"
                         f"\\fs56\\3c&H000000&\\3a&H33&\\bord14\\fad(120,200)}}{formats._clean(c.get('text'))}")
+    return head + "\n".join(rows) + "\n"
+
+
+# ---------------------------------------------------------------- the joined montage
+CARD_FONT = "Montserrat ExtraBold"       # the one face a card is drawn in, like the tags
+CARD_MAX_W = 940                         # a card's words never run wider than this, whatever they say
+
+
+def fit_card_lines(lines) -> list:
+    """The card's (text, size, colour) lines, each made to fit the frame. A long line is first split in two where
+    the halves come out most even, and then made smaller until it fits, the way the heading box is. Returns
+    (text, size, colour) again, so the caller never has to know what was changed."""
+    font = render._Font.get(CARD_FONT)
+    out = []
+    for text, size, colour in lines:
+        text, size = formats._clean(text), int(size)
+        if not text:
+            continue
+        words = text.split()
+        pieces = [text]
+        if font.width(text, size) > CARD_MAX_W and len(words) > 1:
+            cut = min(range(1, len(words)), key=lambda i: max(font.width(" ".join(words[:i]), size),
+                                                              font.width(" ".join(words[i:]), size)))
+            pieces = [" ".join(words[:cut]), " ".join(words[cut:])]
+        widest = max(font.width(p, size) for p in pieces)
+        if widest > CARD_MAX_W:
+            size = max(36, int(size * CARD_MAX_W / widest))
+        for piece in pieces:
+            out.append((piece, size, colour))
+    return out
+
+
+def card_events(lines, t0: float, t1: float) -> list:
+    """One numbered card: its lines stacked and centred on the middle of the frame, popping in and fading out."""
+    font = render._Font.get(CARD_FONT)
+    fitted = fit_card_lines(lines)
+    heights = [font.em(size) * 1.12 for _text, size, _c in fitted]
+    top = formats.H / 2 - sum(heights) / 2
+    rows = []
+    for (text, size, colour), h in zip(fitted, heights):
+        cy = top + h / 2 - font.cap_shift(size)
+        top += h
+        rows.append(f"Dialogue: 5,{_t(t0)},{_t(t1)},Card,,0,0,0,,{{\\an5\\pos({formats.CARD_MID},{cy:.0f})\\fs{size}"
+                    f"\\1c{formats._ass_colour(colour)}\\fad(60,90)\\fscx70\\fscy70\\t(0,160,\\fscx100\\fscy100)}}{text}")
+    return rows
+
+
+def build_join_ass(timeline) -> str:
+    """The caption-file drawing for a whole joined montage.
+
+    `timeline` is a list, in playing order, of {"kind": "card", "t0", "t1", "lines"} and
+    {"kind": "part", "t0", "t1", "chips": [the badges and tags of that part]}. Times are seconds in the JOINED clip.
+    The first part gets no flash (nothing is being cut away from), every later one does."""
+    head = ("[Script Info]\nScriptType: v4.00+\nPlayResX: %d\nPlayResY: %d\nWrapStyle: 2\n\n[V4+ Styles]\n"
+            "Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,"
+            "Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,"
+            "MarginV,Encoding\n"
+            "Style: Tag,%s,80,&H00FFFFFF&,&H00FFFFFF&,&H00000000&,&H00000000&,0,0,0,0,100,100,0,0,3,16,0,7,0,0,0,1\n"
+            "Style: Card,%s,100,&H00FFFFFF&,&H00FFFFFF&,&H00000000&,&H00000000&,0,0,0,0,100,100,0,0,1,9,0,5,0,0,0,1\n"
+            "Style: Box,%s,40,&H00FFFFFF&,&H00FFFFFF&,&H00000000&,&H00000000&,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1\n"
+            "\n[Events]\nFormat: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text\n"
+            ) % (formats.W, formats.H, CARD_FONT, CARD_FONT, CARD_FONT)
+    rows, first_part = [], True
+    for seg in timeline:
+        t0, t1 = float(seg["t0"]), float(seg["t1"])
+        if t1 <= t0:
+            continue
+        if seg["kind"] == "card":
+            rows.extend(card_events(seg.get("lines") or [], t0, t1))
+            continue
+        for chip in seg.get("chips") or []:
+            if chip.get("kind") in ("tag", "badge"):
+                a = t0 + float(chip["t0"]) if chip.get("t0") is not None else t0
+                b = min(t0 + float(chip["t1"]), t1) if chip.get("t1") is not None else t1
+                if b > a:
+                    rows.append(_tag(chip, a, b))
+        if not first_part:
+            rows.append(_rect(0, 0, formats.W, formats.H, "&HFFFFFF&", "&H40&", t0, min(t0 + formats.FLASH, t1)))
+        first_part = False
     return head + "\n".join(rows) + "\n"
 
 

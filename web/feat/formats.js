@@ -28,7 +28,7 @@
     .fmt-best b{font-weight:600;color:var(--ink)}
     .fmt-state{margin:2px 0 0;font-size:12px;line-height:1.4;font-weight:600;color:var(--dim)}
     .fmt-state[data-s="ready"]{color:var(--brand-deep)}
-    .fmt-state[data-s="needs_webcam"]{color:var(--ink)}
+    .fmt-state[data-s="needs_webcam"],.fmt-state[data-s="montage"],.fmt-state[data-s="needs_lines"]{color:var(--ink)}
     .fmt-state span{font-weight:400}
     /* The little 9:16 picture: a phone-shaped frame with the parts of the clip drawn as plain blocks. */
     .fmt-dg{position:relative;flex:none;width:45px;height:80px;border:1px solid var(--line-2);border-radius:5px;
@@ -130,12 +130,14 @@
       const id = String(f.id ?? "").trim();
       const label = String(f.label ?? "").trim() || id;
       if (!id || out.some((x) => x.id === id)) continue;
-      // `state` is the server's own word for whether the type really works: ready, needs_webcam or unavailable.
+      // `state` is the server's own word for whether the type really works: ready, needs_webcam, montage (made on
+      // the Montages page from several clips), needs_lines (Chat: the person types the lines) or unavailable.
       // An older server that sends no state is treated as unavailable, never as ready, so nothing is promised.
-      const state = ["ready", "needs_webcam", "unavailable"].includes(f.state) ? f.state : "unavailable";
+      const state = ["ready", "needs_webcam", "montage", "needs_lines", "unavailable"].includes(f.state) ? f.state : "unavailable";
       out.push({ id, label, hint: String(f.hint ?? "").trim(), line: String(f.line ?? "").trim(),
         best: String(f.best_for ?? "").trim(), state, reason: String(f.reason ?? "").trim(),
-        needs: num(f.needs_parts) === null ? null : Math.max(0, Math.round(num(f.needs_parts))) });
+        needs: num(f.needs_parts) === null ? null : Math.max(0, Math.round(num(f.needs_parts))),
+        minParts: Math.max(0, Math.round(num(f.min_parts) || 0)), maxParts: Math.max(0, Math.round(num(f.max_parts) || 0)) });
     }
     const stated = j && Number.isFinite(Number(j.count)) ? num(j.count) : out.length;
     return { rows: out, count: out.length === 0 ? 0 : Math.max(out.length, stated), pick: j && String(j.default ?? "") };
@@ -237,6 +239,14 @@
     if (f.state === "ready") return `<p class="fmt-state" data-s="ready">Ready</p>`;
     if (f.state === "needs_webcam") {
       return `<p class="fmt-state" data-s="needs_webcam">Needs a webcam in the stream <span>- it hides the webcam picture, so a clip without one is made as a plain moment.</span></p>`;
+    }
+    if (f.state === "montage") {
+      return `<p class="fmt-state" data-s="montage">Made from several clips <span>- it joins ${f.minParts === f.maxParts ? f.minParts : `${f.minParts} to ${f.maxParts}`} moments of one video, so it is made on the Montages page.</span></p>
+        <button class="btn sm" type="button" data-act="pcpage" data-v="montage">Make a montage</button>`;
+    }
+    if (f.state === "needs_lines") {
+      return `<p class="fmt-state" data-s="needs_lines">Needs chat lines you type <span>- ${esc(f.reason)}</span></p>
+        <button class="btn sm" type="button" data-act="pcpage" data-v="montage">Add chat lines</button>`;
     }
     return `<p class="fmt-state" data-s="unavailable">Not available yet: <span>${esc(f.reason || "Clipstorm cannot make this type yet.")}</span></p>`;
   }
@@ -529,7 +539,9 @@
           <p class="fmtp-hint">A clip type is the shape of one Short. Each card shows how it is built, what viewers see
             and when to use it. A type marked "Not available yet" is not offered, because Clipstorm cannot make it
             properly today. New clips are plain Moments unless another type is chosen for them. To choose one,
-            open a clip, go to <b>Look</b>, pick it under <b>Clip type</b>, then press Save and re-make clip.</p>
+            open a clip, go to <b>Look</b>, pick it under <b>Clip type</b>, then press Save and re-make clip. The types
+            that join several moments (Callback, Compilation, Escalation, Then vs now) and Chat are made on the
+            <b>Montages</b> page.</p>
           <div id="fmt_formats"></div></section>
       </div>`;
     },

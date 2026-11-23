@@ -84,7 +84,7 @@
     live: ["live", 1, "Live recording"], streamer: ["live", 2, "Streamer mode"], creators: ["live", 3, ""],
     formats: ["look", 1, "Caption styles"], brand: ["look", 2, "Brand template"], pictures: ["look", 3, "Asset library"], sounds: ["look", 4, "Audio"],
     // The old "audio" and "audio-edit" pages are not rows any more: one Audio row, and clip audio is edited in the clip editor.
-    analytics: ["grow", 1, "Analytics"], week: ["grow", 2, ""], improve: ["grow", 3, ""], schedule: ["grow", 4, "Calendar"],
+    analytics: ["grow", 1, "Analytics"], calendar: ["grow", 2, ""], week: ["grow", 3, ""], improve: ["grow", 4, ""], schedule: ["grow", 5, "Timers"],
     ai: ["settings", 1, ""], transcribe: ["settings", 2, ""], apps: ["settings", 3, ""], "ai-usage": ["settings", 4, ""],
     storage: ["settings", 5, ""], account: ["settings", 6, ""], tools: ["settings", 7, ""], help: ["settings", 8, ""],
   };

@@ -67,8 +67,9 @@ ASPECTS = {"4:5": (1080, 1350, 190), "1:1": (1080, 1080, 320)}
 
 
 # What a person is told about each shape, in plain words: the sentence says what the viewer sees, "best" says when
-# to pick it. `joins` shapes stitch several separate moments into one Short; nothing in PeakCut picks several
-# moments for one clip yet, so those are listed as not available instead of being offered and doing nothing.
+# to pick it. `joins` shapes stitch several separate moments of one video into one Short: studio/montage.py picks the
+# moments and joins them, and the "Montages" page asks for it (they are not in the single-clip editor, because one
+# clip holds one moment). `chat` needs lines of chat text, which PeakCut cannot know (see _REASON).
 INFO = {
     "moment": {"line": "One highlight, cut cleanly, with your hook title and captions. Nothing else is added.",
                "best": "most clips: a funny, loud or surprising moment"},
@@ -87,9 +88,15 @@ INFO = {
     "waitforit": {"line": "A WAIT FOR IT tag and a bar that fills up, then a flash on the big moment.",
                   "best": "a slow build into one big payoff"},
 }
+# How many moments each joining shape takes, as (fewest, most). Two for the pair shapes, three to five for a count.
+MONTAGE_RULES = {"callback": (2, 2), "thenvsnow": (2, 2), "compilation": (3, 5), "escalation": (3, 5)}
+JOINS = tuple(MONTAGE_RULES)
+
 _REASON = {
-    "joins": "It needs several separate moments joined into one Short, and PeakCut only picks one moment per clip so far.",
-    "chat": "It needs the stream's own chat messages for the clip, and PeakCut does not attach them to clips yet.",
+    "joins": "It needs several moments of one video joined into one Short, and the part of Clipstorm that does that "
+             "could not be loaded.",
+    "chat": "Clipstorm only counts how busy chat was, it does not keep what chat wrote, so it cannot show real "
+            "messages. You can type the lines yourself.",
 }
 
 
@@ -105,18 +112,32 @@ def _wired() -> bool:
         return False
 
 
+def _joiner_ready() -> bool:
+    """True when studio/montage.py loads, which is what makes the joining shapes real."""
+    try:
+        from . import montage      # noqa: F401
+        return True
+    except Exception:              # noqa: BLE001 - a part that will not load means "not available", never a crash
+        return False
+
+
 def public() -> list:
     """The format catalogue for the pages: ids, labels, one plain sentence each, and whether each one really works.
-    `state` is "ready", "needs_webcam" (works only on a clip with a webcam picture) or "unavailable" (with `reason`)."""
+    `state` is "ready", "needs_webcam" (works only on a clip with a webcam picture), "montage" (made from several of
+    a video's clips on the Montages page), "needs_lines" (chat: the person types the chat lines) or "unavailable"
+    (with `reason`)."""
     wired = _wired()
+    joined = _joiner_ready()
     rows = []
     for k, v in FORMATS.items():
         info = INFO.get(k, {})
         state, reason = "ready", ""
         if info.get("joins"):
-            state, reason = "unavailable", _REASON["joins"]
+            state, reason = ("montage", "") if joined and wired else ("unavailable", _REASON["joins"])
         elif info.get("chat"):
-            state, reason = "unavailable", _REASON["chat"]
+            # The recording keeps how many messages arrived each second, never their words. So the lines are typed
+            # by the person, and the page says so instead of pretending the stream's chat was copied.
+            state, reason = ("needs_lines", _REASON["chat"]) if wired else ("unavailable", _REASON["chat"])
         elif k != "moment" and not wired:
             state, reason = "unavailable", "It is built, but the editor has not been connected to it yet."
         elif info.get("webcam"):
@@ -124,7 +145,8 @@ def public() -> list:
         rows.append({"id": k, "label": v["label"], "needs_parts": v["needs_parts"], "hint": v["hint"],
                      "line": info.get("line", v["hint"]), "best_for": info.get("best", ""),
                      "available": state != "unavailable", "state": state, "reason": reason,
-                     "needs_webcam": bool(info.get("webcam"))})
+                     "needs_webcam": bool(info.get("webcam")),
+                     "min_parts": MONTAGE_RULES.get(k, (0, 0))[0], "max_parts": MONTAGE_RULES.get(k, (0, 0))[1]})
     return rows
 
 

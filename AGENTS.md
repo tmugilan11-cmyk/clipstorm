@@ -265,3 +265,23 @@ days old are listed but never judged, and with fewer than 3 measured clips it re
 serves the "What worked" page (`web/feat/own-results.js`) with the step-by-step "Connect your YouTube channel" guide.
 `accounts.youtube_status()` records the scopes Google granted and reports a retired refresh token (Google ends it
 after 7 days while the app is in Testing). Checked by `tests/test_own_results.py`.
+
+**A montage joins several moments of one video, and every part is cut like any other clip.** `studio/montage.py`
+`choose()` takes the ticked clips or the best-scoring non-overlapping ones (a Compilation plays worst to best, the
+other types in time order); `fit()` shortens each moment from its start until the whole fits the creator's `max_len`
+(never under `formats.MIN_PART`); `make()` renders each moment with `render.render_clip` and joins the finished parts
+with a numbered card, a whoosh and a flash. It never cuts a source with its own `-ss`: each part is trimmed to the
+shorter of its picture and sound before joining, and the file is refused if `render.av_gap` is 0.06 s or more. A
+moment's picture comes from the clip's `src`, else `source_path`, else (live recording over) a fresh
+`download_section(exact=True)` into the montage's own work folder; a clip is never changed. Routes in
+`studio/api_montage.py`, page in `web/feat/montage.js` ("Montages"), records in `montages.json` and `montage/` in the
+video's folder (a montage is not a clip and is not in the post queue). Chat only counts messages and never keeps their
+words, so the Chat type shows up to five lines the person types. Checked by `tests/test_montage.py` (includes a
+beep-on-the-frame sync check).
+
+**The structure follows OpusClip** (`docs/research/opusclip-structure.md`, every saved help page read, gaps ranked).
+The submit box has "What to look for" (saved on the chosen creator as `clip_focus`), length buttons, clip kind and
+saved setups; every video has its own page at `/app/videos/<id>` with sort, score/length/kind/decision filters, a
+grid/list switch, letter grades from the judge's marks, Keep/Skip and bulk Post (`web/feat/project-tools.js`); the
+clip editor is three columns (live transcript, video, tab rail); `web/feat/calendar.js` is a real month calendar and
+the old timers page is "Timers". Open-source ideas and skills found are in `docs/research/open-source-ideas.md`.

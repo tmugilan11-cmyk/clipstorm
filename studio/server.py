@@ -26,7 +26,7 @@ from . import account, load
 from . import (accounts, ai, alerts, auth, config, creators, ctx, db, jobs, live, media, overlay, posting,
                profiles, render, safe, transcribe, usage)
 from . import (api_auto, api_brand, api_brandai, api_heading, api_history, api_hooks, api_igcaption,
-               api_learnreport, api_memesound, api_overlay, api_posttime, api_preview, api_review, api_sound,
+               api_learnreport, api_montage, api_memesound, api_overlay, api_posttime, api_preview, api_review, api_sound,
                api_stats, api_style, api_text)
 from . import api_analytics, api_learn, api_own_results, api_trends
 
@@ -271,6 +271,7 @@ app.include_router(api_hooks.router)
 app.include_router(api_learnreport.router)
 app.include_router(api_brandai.router)
 app.include_router(api_posttime.router)
+app.include_router(api_montage.router)
 app.include_router(api_own_results.router)
 
 

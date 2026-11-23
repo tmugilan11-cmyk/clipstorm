@@ -294,15 +294,15 @@
   });
 
   P.page("schedule", {
-    nav: "Schedule",
+    nav: "Timers",
     icon: "clock",
-    tip: "Put clips and Improve rounds on a timer, as text you copy",
+    tip: "Run Clipstorm on a timer, as text you copy. For your posts by day, open Calendar.",
     path: "schedule",
     group: "Set up",
     order: 42,
     view() {
       return `<div class="sch set-sec">
-        <h1 class="sch-h">Schedule</h1>
+        <h1 class="sch-h">Timers</h1>
         <p class="help sch-lead">Clipstorm does not run in the background by itself. This page writes the text that
           tells this computer to wake Clipstorm at a time you choose. You copy the text and set it up.</p>
 

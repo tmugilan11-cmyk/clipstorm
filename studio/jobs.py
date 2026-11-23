@@ -460,6 +460,21 @@ def request_render(jid, cid, changes: dict):
         new["format"] = (str(changes["format"]).strip().lower()[:20] if changes["format"] not in ("", None) else None)
         if new["format"] not in formats.FORMATS:
             new["format"] = None
+        if new["format"] in formats.JOINS:
+            # Callback, Compilation, Escalation and Then vs now join several clips of a video, so they are made from
+            # the Montages page (studio/montage.py). One clip holds one moment: given one of these it is a plain clip.
+            new["format"] = None
+    if "chat" in changes:
+        # The lines the Chat type pops up after the big moment. Clipstorm records how busy chat was, never what it
+        # said, so the person types them. A list of short lines, or None for none at all.
+        lines = changes["chat"]
+        if lines in (None, ""):
+            new["chat"] = None
+        elif not isinstance(lines, list) or not all(isinstance(x, str) for x in lines):
+            raise ValueError("Chat lines must be a list of short lines of text.")
+        else:
+            lines = [" ".join(x.split())[:formats.CHAT_TEXT_MAX] for x in lines]
+            new["chat"] = [x for x in lines if x][:formats.CHAT_MAX] or None
     if "mood" in changes:
         # One word names the sound. "" means no sound at all, which is different from "not mentioned".
         new["mood"] = str(changes["mood"] or "").strip().lower()[:20] or None

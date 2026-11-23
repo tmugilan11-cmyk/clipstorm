@@ -791,6 +791,18 @@ def _add_sound(clip, out: dict, folder: Path) -> None:
         print(f"Sound {mood} was not added, so the clip keeps its own audio.", flush=True)
 
 
+def _cast(job) -> list:
+    """Who is in this video, from its story (kept beside the job, or on a live recording): names for the captions."""
+    story = job.get("story") if isinstance(job.get("story"), dict) else None
+    if story is None:
+        try:
+            story = json.loads((Path(job["dir"]) / "story.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError, KeyError, TypeError):
+            story = None
+    cast = story.get("cast") if isinstance(story, dict) else None
+    return [str(x) for x in cast][:20] if isinstance(cast, list) else []
+
+
 def _caption_words(job, clip, words, off):
     span = [round(clip["start"], 2), round(clip["end"], 2), "en2"]      # "en2": captions made always-English
     if clip.get("fixed_for") == span and clip.get("fixed_words") and not any(
@@ -800,8 +812,10 @@ def _caption_words(job, clip, words, off):
         raw = [w for w in words if clip["start"] - 1 <= w["s"] <= clip["end"] + 1]
         try:
             usage.set_context(job.get("creator"), job.get("title") or "")
+            about = " ".join(str(clip.get(k) or "") for k in ("title", "description", "context"))
             raw = brain.english_captions(raw, job.get("lang") or "", job.get("title") or "",
-                                         youtube_english=lambda: _english_part(job, clip))
+                                         youtube_english=lambda: _english_part(job, clip), about=about,
+                                         names=brain.caption_names(about, cast=_cast(job)))
             clip.update(fixed_words=raw, fixed_for=span)
         except Exception:  # noqa: BLE001 - captions still render with the words as heard
             pass

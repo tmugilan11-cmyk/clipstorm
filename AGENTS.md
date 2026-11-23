@@ -413,3 +413,11 @@ stays the gate (unknown fields and looks dropped, times clamped). The route answ
 (`edit_ai.describe`, read off the clip, not off the AI's claim) and whether the video must be re-made
 (`needs_render`: a title, description or hashtags only change the post). The box sits in the Cut tab, not inside
 More options; Enter applies it. Checked by `tests/test_note_ai.py`.
+
+**A misheard name is put right in the captions.** Speed said "don't take KSI" and the captions said "don't take care
+sir": the caption tidier (`brain._fix_caption_words`) was shown only the video title, and its guard (`_same_word`)
+refuses any fix that does not look like the word heard. `jobs._caption_words` now passes what the clip is about
+(its title, description and context) and `brain.caption_names(...)`: the story's cast (`jobs._cast`, from
+`story.json` or a live job's `story`) plus the capitalised words of that text. A fix to one of those names is let
+through however different it looks (`_is_name`); a word emptied as part of a merge is kept when the word before it
+was refused. Checked by `tests/test_caption_names.py`.

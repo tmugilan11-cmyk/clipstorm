@@ -13,8 +13,10 @@ clip, and it does so from the cues this module stores, so a page that browses th
     POST   /api/memesounds/play/{slug}    the mp3, so a page can listen before choosing
     GET    /api/jobs/{jid}/clips/{cid}/sounds   the cues on one clip
     PUT    /api/jobs/{jid}/clips/{cid}/sounds   write the cues on one clip
-    POST   /api/jobs/{jid}/clips/{cid}/sounds/suggest  let the AI place them
+    POST   /api/jobs/{jid}/clips/{cid}/sounds/suggest  let the sound team (studio/sound_pick.py) place them
     POST   /api/jobs/{jid}/clips/{cid}/sounds/hear     mix the cues into the clip now
+    GET    /api/memesounds/knowledge      how many sounds are researched, and when
+    POST   /api/memesounds/knowledge/refresh  research them again now, on a thread
 
 It deliberately does not import `server.py`, for the same circular-import reason as every other `api_*` module.
 """
@@ -22,6 +24,8 @@ from __future__ import annotations
 
 import json
 import subprocess
+import threading
+import time
 from pathlib import Path
 from typing import List
 
@@ -29,7 +33,7 @@ from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
 
-from . import ai, auth, config, ctx, jobs, memesound, safe, soundplan
+from . import ai, auth, config, ctx, jobs, memesound, safe, soundplan, usage
 
 router = APIRouter()
 
@@ -291,9 +295,7 @@ async def clip_sounds_suggest(jid: str, cid: str, request: Request) -> dict:
     if not ai.ready():
         raise HTTPException(400, "No AI is set up, so PeakCut cannot choose the sounds. Set one up under AI.")
 
-    words = clip.get("fixed_words") or job.get("words") or []
-    start = float(clip.get("start") or 0.0)
-    end = float(clip.get("end") or 0.0)
+    asking = threading.local()          # which member of the sound team is asking, for the usage record
 
     def ask(prompt: str) -> str:
         """Ask the configured AI, in the one shape the rest of PeakCut uses.
@@ -303,43 +305,69 @@ async def clip_sounds_suggest(jid: str, cid: str, request: Request) -> dict:
         "Internal Server Error" with `AttributeError: module 'studio.ai' has no attribute 'ask'` in the log."""
         last = None
         tries = list(ai.models()) * 2   # one more go each: the service drops the slowest answers now and then
-        for model in tries:
+        for k, model in enumerate(tries):
             try:
                 # No schema on purpose. The prompt already says exactly which object it wants, and handing the
                 # same request over as a JSON schema made the model think about the schema as well as the clip:
                 # measured on this install, the identical prompt took 8.9 s without a schema and 38.3 s with one.
                 # 150 seconds, because a real answer on a 7-second clip still measured 48 s and then 85 s, so 90
                 # turned the slower half of the answers into "PeakCut couldn't reach Logfare" while the service
-                # was answering fine. `soundplan.cues()` checks the answer against the rules itself.
+                # was answering fine. The sound team checks every answer against its rules itself.
                 # A retry, because this service sometimes ends a long answer with a read timeout and
                 # answers the same prompt in 48 s the next second: measured on one clip, 48 s, 85 s, 121 s and
                 # then a failure, with the identical prompt. Pressing the button again should not be the only
                 # way past a dropped connection.
-                out, _sent, _wrote = ai.call(model, prompt, None, 150.0)
+                out, sent, wrote = ai.call(model, prompt, None, 150.0)
+                usage.record(sent, wrote, ("Sounds: " + str(getattr(asking, "purpose", "") or "a clip"))[:60])
+                tally = getattr(asking, "tally", None)
+                if tally is not None:
+                    tally.add(sent + wrote, calls=0)  # the sound team counts its calls itself
                 return out if isinstance(out, str) else json.dumps(out)
             except Exception as e:  # noqa: BLE001
                 last = e
+                if any(w in str(e).lower() for w in ("503", "429", "unavailable", "timed out")) and k + 1 < len(tries):
+                    time.sleep(5.0)     # a busy service answers the same prompt a few seconds later
         raise RuntimeError(ai.explain(last) or str(last) if last else "The AI did not answer.")
 
+    def team(prompt: str, purpose: str = "", timeout: float = 150.0, tally=None):
+        """The sound team's way of asking: the same call as `ask`, answered as parsed JSON."""
+        asking.purpose, asking.tally = purpose, tally
+        return ai._parse(ask(prompt))
+
     def work() -> dict:
-        got = soundplan.plan(words, start, end, brand=_brand(job), ask=ask,
-                             situation=str(body.get("situation") or ""))
-        picked = soundplan.sounds_for(got.get("cues") or [])
-        kept_rows = []
-        for mood, rows in picked.items():
-            for row in rows:
-                if memesound.kept(row["slug"]):
-                    kept_rows.append(row)
-        # A cue whose sound is only in the catalogue still has to come down to this machine before it can be
-        # mixed, so the answer says which ones need keeping rather than pretending they are ready.
-        cues = soundplan.with_sounds(got.get("cues") or [], picked)
-        for cue in cues:
-            cue["kept"] = memesound.kept(cue["slug"])
-        return {"ok": True, "cues": cues, "why": got.get("why") or "", "source": got.get("source") or "none",
-                "seconds": round(max(0.0, end - start), 2), "most": soundplan.most_for(max(0.0, end - start)),
-                "need": [c["slug"] for c in cues if not c.get("kept")]}
+        # The sound team (studio/sound_pick.py): a reader finds the beats, three pickers propose sounds from the
+        # researched library and the web, two critics judge each one placed for real, a sound designer signs
+        # off. Every answer is checked by the code. The chosen sounds are copied onto the shelf, so "need" is
+        # normally empty and the page can play them straight away.
+        made = Path(job["dir"]) / "clips" / (clip.get("file") or f"{clip.get('id')}.mp4")
+        got = soundplan.suggest(job, clip, made if made.is_file() else None, ask=team, brand=_brand(job),
+                                focus=str(body.get("situation") or ""))
+        got["cost"] = got.get("cost") or {}
+        return got
 
     return await run_in_threadpool(work)
+
+
+@router.get("/api/memesounds/knowledge")
+def memesounds_knowledge(request: Request) -> dict:
+    """How much the sound picker knows: how many sounds are researched, when, and whether a refresh is running."""
+    _me(request)
+    from . import sound_kb
+    return {"ok": True, **sound_kb.status()}
+
+
+@router.post("/api/memesounds/knowledge/refresh")
+def memesounds_knowledge_refresh(request: Request) -> dict:
+    """Research the meme sounds again now, on a thread. Answers at once; the status route shows the progress."""
+    u = _me(request)
+    _throttle("msr:" + u.id, 3, 3600, "The sound library was refreshed a moment ago. Give it a while.")
+    if not ai.ready():
+        raise HTTPException(400, "No AI is set up, so the sounds cannot be researched. Set one up under AI.")
+    from . import sound_kb
+    if sound_kb.status()["building"]:
+        return {"ok": True, "started": False, **sound_kb.status()}
+    threading.Thread(target=ctx.bind(sound_kb._safe_build), daemon=True, name="sound-knowledge").start()
+    return {"ok": True, "started": True, **sound_kb.status()}
 
 
 def _brand(job: dict) -> dict:

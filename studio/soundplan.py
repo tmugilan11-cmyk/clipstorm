@@ -1,5 +1,16 @@
 """Where the sounds belong, and which one: the AI reading of a clip that decides both.
 
+`suggest()` at the bottom is what the page's "Let the AI place sounds" button runs now. It hands the clip to
+the sound team in studio/sound_pick.py (a reader, three pickers, two critics and a sound designer, choosing
+from the researched sounds in studio/sound_kb.py) and copies the chosen sounds onto the shelf.
+
+Everything above `suggest()` is the FIRST picker, kept on purpose so its answers can be compared with the new
+one on the same clips (docs/research/meme-sound-v2.md). Measured on the owner's stream, it was wrong in four
+ways: the AI only chose a mood word and never saw a single sound, so `sounds_for` took whatever the catalogue
+listed first for "funny" or "angry"; a time was the first word of a three-word group, so every sound started
+on top of the streamer's voice; the length of a sound was never known, so a seven-second screech ran over the
+next lines; and the same sound could be used twice on one clip.
+
 A meme sound is only funny if it lands on the right word. This module asks the configured AI to read a clip's own
 words plus the catalogue's descriptions and answer with cues — a time, a mood, and why — and then maps each mood
 onto a real sound from the catalogue. Two calls at most, never one per cue.
@@ -251,6 +262,31 @@ def sounds_for(chosen: Sequence[dict], limit_each: int = 1) -> Dict[str, List[di
         except memesound.CatalogueDown:
             out[mood] = []
     return out
+
+
+def suggest(job: dict, clip: dict, clip_file=None, *, ask=None, brand: Optional[dict] = None, focus: str = "",
+            log=None) -> dict:
+    """The sounds for one clip, chosen by the sound team, with each chosen sound copied onto the shelf.
+
+    Answers in the shape the audio editor reads: {"ok", "cues", "why", "source", "seconds", "most", "need"},
+    plus what the team considered ("beats", "considered") and what it cost ("cost"). A refresh of the sound
+    knowledge is started on a thread when it is missing or a week old; it never holds this answer up."""
+    from . import sound_kb, sound_moment, sound_pick
+    try:
+        sound_kb.fresh(log)
+    except Exception:  # noqa: BLE001 - the knowledge we have is still good
+        pass
+    words = sound_moment.words_for(job, clip)
+    got = sound_pick.choose(clip, words, clip_file, ask=ask, brand=brand, focus=focus, log=log)
+    cues = got.get("cues") or []
+    need = sound_pick.keep_cues(cues) if cues else []
+    for cue in cues:
+        cue["kept"] = memesound.kept(cue["slug"])
+    try:
+        span = max(0.0, float(clip.get("end") or 0) - float(clip.get("start") or 0))
+    except (TypeError, ValueError):
+        span = 0.0
+    return dict(got, ok=True, cues=cues, seconds=round(span, 2), most=sound_pick.most_for(span), need=need)
 
 
 def with_sounds(chosen: Sequence[dict], picked: Dict[str, List[dict]]) -> List[dict]:

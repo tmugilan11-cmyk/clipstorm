@@ -302,3 +302,18 @@ finalists side by side: drops repeats, re-ranks, moves a score at most +6/-15, a
 `own_results.taste_lines()` reaches scouts and critics. Measured in `docs/research/judge-v3-comparison.md`: 7 calls,
 46k tokens, 41 s per 8-minute live check (old: 6, 27k, 32 s), plus one story read in parallel. Checked by
 `tests/test_judge.py`.
+
+**A meme sound is chosen by a team, from sounds that were researched.** `studio/sound_kb.py` keeps
+`memesounds/knowledge.json` (myinstants' all-time and trending lists, the catalogue's trending lists, the classic names
+in `SEEDS`, the owner's shelf) and researches it again after a week: each sound is looked up on its myinstants page,
+Know Your Meme and YouTube (`studio/sound_web.py`; `studio/web.py`'s Bing search returns unrelated pages here), the AI
+writes what it means, its `MOMENTS`, when not to use it, whether it has words and how popular it is, and each file is
+measured for length, silent start (`lead`) and loudness. Files come only from the catalogue (dankmachine.com) into
+`memesounds/kb/` and reach the shelf only when put on a clip (`sound_pick.keep_cues`). `studio/sound_pick.py`
+`choose()` works like the judge: a reader finds beats hung on a real word, myinstants is searched for this clip, three
+pickers propose, every proposal is placed for real (`place`: the hit on the beat, a talking sound never over the next
+line), two critics judge it, and a sound designer keeps at most `most_for(seconds)` sounds; none is a valid answer.
+`memesound.mix` ducks any sound longer than 1.5 s under the voice and ends the file with the picture.
+`PEAKCUT_SOUND_WEB=0` and `PEAKCUT_SOUND_VISION=0` turn off the web and the frames. The old picker (a mood word, then
+the catalogue's first row) is kept in `soundplan.py` for comparison: `docs/research/meme-sound-v2.md`. Checked by
+`tests/test_sound_kb.py` and `tests/test_sound_pick.py`.

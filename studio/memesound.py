@@ -40,6 +40,8 @@ MIX_SECONDS = 300             # one clip is seconds; a stalled ffmpeg is stopped
 SR = 48000
 MAX_CUES = 12                 # a fifteen second clip with twelve sounds on it is noise, not a joke
 MIN_GAP = 0.35                # two sounds closer together than this arrive as one click
+DUCK_LONGER = 1.5             # a sound heard for longer than this is pushed under the voice while it rings
+DUCK = "threshold=0.04:ratio=6:attack=15:release=350:makeup=1"   # the same voice key music.py uses for its beds
 SLUG = re.compile(r"^[A-Za-z0-9_.-]{1,80}$")
 
 _lock = threading.Lock()
@@ -120,6 +122,16 @@ def clean(row: dict) -> dict:
     pop = row.get("popularity")
     if isinstance(pop, (int, float)) and pop >= 0:
         out["popularity"] = int(pop)
+    # What the catalogue says about where a sound comes from and how it is used. The sound picker reads these
+    # (studio/sound_kb.py); carried only when sent, like everything above.
+    for key, most in (("how_used", 300), ("origin", 300)):
+        said = str(row.get(key) or "").strip()
+        if said:
+            out[key] = said[:most]
+    for key in ("aliases", "tags"):
+        got = [str(x).strip()[:40] for x in (row.get(key) or []) if str(x or "").strip()][:8]
+        if got:
+            out[key] = got
     return out
 
 
@@ -313,6 +325,30 @@ def store(slug: str, data: bytes, title: str = "") -> Path:
     return dst
 
 
+def shelve(slug: str, source: Union[str, Path], title: str = "", extra: Optional[dict] = None) -> Path:
+    """Put a copy of a file this machine already has on the shelf, under a catalogue name.
+
+    The sound picker keeps its own copies of the catalogue's sounds (`sound_kb.kb_dir()`); when it puts one on a
+    clip, the sound is copied here so the clip's cue is mixed exactly like a sound the person kept by hand. The
+    address it was downloaded from goes into the index with it."""
+    dst = path_for(slug)
+    if kept(slug):
+        return dst
+    src = Path(source)
+    if not src.is_file() or src.stat().st_size <= 512:
+        raise RuntimeError(f"There is no usable copy of {slug} to keep.")
+    _made(shelf())
+    tmp = dst.with_suffix(".part")
+    try:
+        tmp.write_bytes(src.read_bytes())
+        tmp.replace(dst)
+    except OSError as e:
+        _drop(tmp)
+        raise RuntimeError(f"PeakCut could not keep {slug}: {safe.friendly(e)}")
+    remember(slug, title, extra)
+    return dst
+
+
 def make_slug(title: str) -> str:
     """A shelf name from a file name: mine- + the letters that survive, so uploads cannot collide with
     catalogue slugs and two uploads of the same name still land as two sounds."""
@@ -439,7 +475,14 @@ def _ffprobe(path: Union[str, Path]) -> dict:
                 dur = max(dur, float(s.get("duration") or 0.0))
             except (TypeError, ValueError):
                 continue
-    return {"duration": dur,
+    pic = 0.0
+    for s in streams:
+        if s.get("codec_type") == "video":
+            try:
+                pic = max(pic, float(s.get("duration") or 0.0))
+            except (TypeError, ValueError):
+                continue
+    return {"duration": dur, "picture": pic,
             "video": any(s.get("codec_type") == "video" for s in streams),
             "audio": any(s.get("codec_type") == "audio" for s in streams)}
 
@@ -546,6 +589,11 @@ def mix(short: Union[str, Path], cues: Sequence[dict], out: Union[str, Path],
         raise ValueError("There is nothing to mix: no cue on this clip survived a look at its numbers.")
     info = _ffprobe(src)
     dur = float(info.get("duration") or 0.0)
+    # The picture decides how long the mixed file is. Some clips come out of the renderer with half a second more
+    # sound than picture; mixing to the longer of the two kept that gap, and a player then shows a frozen last
+    # frame while the sound runs on. Ending the sound with the picture keeps the two exactly together.
+    if info.get("video") and 0 < float(info.get("picture") or 0.0) < dur:
+        dur = float(info["picture"])
     if dur <= 0:
         raise RuntimeError(f"{src.name} reports no length, so no sound can be placed on it.")
     has_audio = bool(info.get("audio"))
@@ -564,16 +612,14 @@ def mix(short: Union[str, Path], cues: Sequence[dict], out: Union[str, Path],
         raise RuntimeError("These sounds are not on this machine: " + ", ".join(sorted(set(missing))))
 
     parts: List[str] = []
-    if has_audio:
-        # The clip's own audio is padded to its full length first, so it is never the short side of the mix: a
-        # sound that starts at 9 s on an 11 s clip must not decide how long the result is.
-        parts.append(f"[0:a]volume={voice:.1f}dB,apad,atrim=0:{dur:.3f}[base]" if voice
-                     else f"[0:a]apad,atrim=0:{dur:.3f}[base]")
-    labels: List[str] = ["base"] if has_audio else []
+    fmt = f"aresample={SR},aformat=sample_fmts=fltp:channel_layouts=stereo"
+    labels: List[str] = []
     args: List[str] = ["ffmpeg", "-y", "-v", "error", "-i", str(src)]
     # Counted by hand, not derived from `len(args)`: those flags are not inputs, and a filter graph that names the
     # wrong stream index fails with nothing but "Invalid argument" to go on.
     feeds = 1
+    shorts: List[str] = []
+    longs: List[str] = []
 
     for i, cue in enumerate(heard):
         sound = path_for(cue["slug"])
@@ -588,23 +634,46 @@ def mix(short: Union[str, Path], cues: Sequence[dict], out: Union[str, Path],
             continue
         ms = int(round(cue["at"] * 1000))
         vol = float(cue.get("volume") or 0.0)
+        fade = min(0.08, span / 4)
         args += ["-i", str(sound)]
-        parts.append(f"[{feeds}:a]atrim=0:{span:.3f},asetpts=PTS-STARTPTS,"
-                     f"volume={vol:.1f}dB,adelay={ms}|{ms}[s{i}]")
-        labels.append(f"s{i}")
+        # The short fade at the cut is what keeps a trimmed sound from ending on a click.
+        parts.append(f"[{feeds}:a]{fmt},atrim=0:{span:.3f},asetpts=PTS-STARTPTS,volume={vol:.1f}dB,"
+                     f"afade=t=out:st={max(0.0, span - fade):.3f}:d={fade:.3f},adelay={ms}|{ms}[s{i}]")
+        (longs if span > DUCK_LONGER and has_audio else shorts).append(f"s{i}")
         feeds += 1
 
-    if not labels:
+    if not shorts and not longs:
         raise RuntimeError("None of the sounds on this clip could be placed.")
+    if has_audio:
+        # The clip's own audio is padded to its full length first, so it is never the short side of the mix: a
+        # sound that starts at 9 s on an 11 s clip must not decide how long the result is.
+        own = f"[0:a]{fmt}," + (f"volume={voice:.1f}dB," if voice else "") + f"apad,atrim=0:{dur:.3f}"
+        if longs:
+            parts.append(own + "[own];[own]asplit=2[base][key]")
+        else:
+            parts.append(own + "[base]")
+        labels.append("base")
+    labels += shorts
+    if longs:
+        # A sound that rings for more than a moment (a violin, a choir, a song) would sit on top of the next thing
+        # the streamer says. It is pushed down whenever the clip's own voice is loud, the same ducking the music
+        # beds use, so the words stay on top. A short hit is placed in a gap by the picker and left at its level.
+        both = "".join(f"[{n}]" for n in longs)
+        joined = (f"{both}amix=inputs={len(longs)}:duration=longest:dropout_transition=0:normalize=0,"
+                  if len(longs) > 1 else f"{both}anull,")
+        parts.append(f"{joined}apad,atrim=0:{dur:.3f}[longs]")
+        parts.append(f"[longs][key]sidechaincompress={DUCK}[ducked]")
+        labels.append("ducked")
     if len(labels) == 1:
-        # One input and nothing to mix with: the clip simply keeps its own audio.
-        parts.append("[base]alimiter=limit=0.95[aout]") if has_audio else parts.append("[base]anull[aout]")
+        # One input and nothing to mix with (a clip with no sound of its own and one cue). It is padded to the
+        # clip's length, so the sound track ends where the picture does.
+        parts.append(f"[{labels[0]}]apad,atrim=0:{dur:.3f},alimiter=limit=0.95[aout]")
     else:
         # Every part is already padded to the clip's own length or shorter, so `longest` cannot outrun the clip;
         # the `-t` on the output is the belt to this braces.
         parts.append("".join(f"[{n}]" for n in labels) +
                      f"amix=inputs={len(labels)}:duration=longest:dropout_transition=0:normalize=0[mixed]")
-        parts.append("[mixed]alimiter=limit=0.95,loudnorm=I=-14:TP=-1.5:LRA=11[aout]")
+        parts.append(f"[mixed]apad,atrim=0:{dur:.3f},alimiter=limit=0.95,loudnorm=I=-14:TP=-1.5:LRA=11[aout]")
 
     cmd = args + ["-filter_complex", ";".join(parts), "-map", "0:v", "-map", "[aout]",
                   "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", str(SR),

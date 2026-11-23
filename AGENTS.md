@@ -399,3 +399,17 @@ against a moving game, so a dark, still scene finds nothing: "IT WAS KSI THE WHO
 top and came out without the streamer, while 31 clips of the same video had the camera at one place (border 55.7
 in that clip). The editor's Look tab now shows `layout_note` when a clip was made without the streamer panel.
 Checked by `tests/test_webcam_known.py`.
+
+**A clip's post title tells the story.** `brain.TITLE_STYLE` is the one rule for every title the AI writes (the
+judge's `RULES`, the clip-page critic in `judge.py`, the clip editor's "new title"): one short sentence a viewer
+would use to retell the clip, at most 90 characters, the streamer named the way fans do, two or three beats
+ending on the punch, one emoji. The owner's example: "Speed finds an alien, thinks it's KSI, and roasts its
+forehead! 😭". Change the style there and nowhere else.
+
+**"Change it in words" is read by the AI.** `studio/edit_ai.py` `understand()` shows the AI the clip (hook, title,
+look, layout) and the talk 30 s either side with its times, and gets back `edit.apply`'s change dict plus a sentence;
+no schema is sent. `edit.parse`'s rules are the fallback when no AI is set up or it does not answer. `edit.apply`
+stays the gate (unknown fields and looks dropped, times clamped). The route answers with what really changed
+(`edit_ai.describe`, read off the clip, not off the AI's claim) and whether the video must be re-made
+(`needs_render`: a title, description or hashtags only change the post). The box sits in the Cut tab, not inside
+More options; Enter applies it. Checked by `tests/test_note_ai.py`.

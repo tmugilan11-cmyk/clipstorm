@@ -53,6 +53,15 @@ If a moment is still unfolding at the very end, leave it out; you will see it ag
 Most checks should return []. Only return a moment you would stop scrolling for.
 """
 
+# How every clip's post title is written: the judge, the live judge, a hand-cut clip and the clip editor's
+# "new title" all use this one rule. The owner's example (2026-11-23): a title that tells the story so that
+# reading it alone makes people want to watch, short, ending on the punch with one emoji.
+TITLE_STYLE = """  the story of the clip in one short sentence, the way a viewer would retell it to a friend, so that
+  reading it alone makes people want to watch. At most 90 characters. Name the streamer the way fans do (Speed, not
+  IShowSpeed). Two or three quick beats joined by commas, ending on the funniest or most shocking part, then one
+  fitting emoji (😭 💀 😂 🤯 😱). Normal sentence case, never ALL CAPS, no hashtags, nothing the clip does not show.
+  Example: "Speed finds an alien, thinks it's KSI, and roasts its forehead! 😭\""""
+
 RULES = """
 Rules:
 - Each clip is {min_len} to {max_len} seconds. Use the [seconds] values for start and end.
@@ -62,7 +71,8 @@ Rules:
 - Skip weak moments. Fewer strong clips beat many weak ones. Return [] if nothing is worth clipping.
 - score: 0-100, how likely a stranger keeps watching. Be honest; most clips are 50-80.
 - hook: at most 5 words, ALL CAPS, shown as big text on the video. Curiosity, but true to what happens.
-{hook_note}- title: at most 70 characters, for the post.
+{hook_note}- title:
+""" + TITLE_STYLE + """
 - description: one or two sentences.
 - hashtags: 5 tags without the # sign.
 - highlight_words: 3 to 6 single words spoken in the clip that carry the punch.

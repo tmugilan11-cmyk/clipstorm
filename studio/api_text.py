@@ -28,7 +28,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 
-from . import auth, edit, jobs, translate
+from . import auth, edit, edit_ai, jobs, translate
 
 router = APIRouter()
 
@@ -210,10 +210,25 @@ async def edit_clip(request: Request, jid: str, cid: str) -> dict:
     clip = _clip_or_404(job, cid)
     if clip.get("status") in ("queued", "rendering"):
         raise HTTPException(409, "This clip is still being made. Try again when it has finished.")
+    # The AI reads the note first: the rules only know a few sentence shapes, and "new title" with no words after
+    # it, "make the title funnier" or "end it after he says forehead" all came back "not understood". The rules
+    # are the fallback when no AI is set up or it does not answer.
+    said, change = "", None
     try:
-        change = edit.parse(note)                 # pure reading: no file, no network, nothing to clean up
-    except Exception:                             # noqa: BLE001 - a note must never take the server down
-        raise HTTPException(400, NOT_UNDERSTOOD)
+        got = await run_in_threadpool(edit_ai.understand, note, clip, _words_around(job, clip))
+        if got["change"]:
+            change, said = got["change"], got["said"]
+        elif got["said"]:
+            raise HTTPException(400, got["said"])
+    except HTTPException:
+        raise
+    except Exception:                             # noqa: BLE001 - no AI, or it did not answer: the rules still work
+        change = None
+    if change is None:
+        try:
+            change = edit.parse(note)             # pure reading: no file, no network, nothing to clean up
+        except Exception:                         # noqa: BLE001 - a note must never take the server down
+            raise HTTPException(400, NOT_UNDERSTOOD)
     understood = {k: v for k, v in change.items() if k != "note"}
     if not understood:
         # An empty note already got its own sentence above; this is a note that reads as words, not as an edit.
@@ -233,10 +248,29 @@ async def edit_clip(request: Request, jid: str, cid: str) -> dict:
         new["translated"] = {}
         hint = (hint + " " if hint else "") + "The translations were cleared because the clip now starts or ends " \
                                               "somewhere else."
+    done = edit_ai.describe(clip, new)
+    if not done:
+        raise HTTPException(400, said or "That note would not change anything on this clip. Try saying it another way.")
+    render_again = edit_ai.needs_render(clip, new)
     clip.clear()
     clip.update(new)                              # in place: anything already holding this clip sees the change
     await run_in_threadpool(jobs.save, job)
-    return {"clip": _public_clip(job, cid), "note": hint}
+    return {"clip": _public_clip(job, cid), "note": hint, "done": done, "said": said, "render": render_again}
+
+
+def _words_around(job: dict, clip: dict) -> list:
+    """The video's words from a little before the clip to a little after it, so a note can move the cut onto them."""
+    start, end = clip.get("start"), clip.get("end")
+    try:
+        every = json.loads((Path(job["dir"]) / "words.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError, KeyError, TypeError):
+        every = None
+    if isinstance(every, list) and isinstance(start, (int, float)) and isinstance(end, (int, float)):
+        near = [w for w in every if isinstance(w, dict) and isinstance(w.get("s"), (int, float))
+                and start - edit_ai.AROUND <= w["s"] <= end + edit_ai.AROUND]
+        if near:
+            return near
+    return _clip_words(job, clip)
 
 
 # ---------------------------------------------------------------- a clip's captions, in another language

@@ -321,10 +321,26 @@ def load(path) -> dict | None:
         return None
 
 
+_save_lock = threading.Lock()
+
+
 def save(path, story) -> None:
+    """Keep the story. Parts of a video are judged a few at a time, so a slower part must not write an older story
+    over a newer one: a story that reaches less far than the one already kept is not written."""
     try:
         p = Path(path)
-        tmp = p.with_suffix(".tmp")
+        with _save_lock:
+            kept = load(p)
+            if kept and float(kept.get("upto") or 0.0) > float((story or {}).get("upto") or 0.0):
+                return
+            _write(p, story)
+    except Exception:  # noqa: BLE001 - a story that cannot be kept is read again next time
+        pass
+
+
+def _write(p, story) -> None:
+    try:
+        tmp = p.with_suffix(f".{threading.get_ident()}.tmp")
         tmp.write_text(json.dumps(story), encoding="utf-8")
         tmp.replace(p)
     except Exception:  # noqa: BLE001 - a story that cannot be kept is read again next time

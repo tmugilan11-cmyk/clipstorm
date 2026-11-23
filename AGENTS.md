@@ -377,3 +377,9 @@ there is nothing to carry on from.
 By default nothing thinks: "think briefly" was not brief on deepseek-v4.1-flash (one critic wrote 9,500 tokens in 3-5
 minutes, so a 10-minute part took about 9 minutes to judge); with thinking off the same critic answers in 15 s.
 `PEAKCUT_AI_THINK_CRITICS=low` gives the critics, the showrunner and the sound sign-off their brief thinking back.
+
+**The parts of a long video are judged three at a time.** `jobs.JUDGE_AHEAD` parts go to the judge at once (the AI
+is a wait on the network); `take()` adds their clips in the order of the video and advances `done_blocks` only past
+parts whose earlier parts are done, so a restart never skips one. `judge_story.save` never writes a story that reaches
+less far than the one already kept, because a slower part finishes after a faster later one. Checked by
+`tests/test_judge_ahead.py`, which runs a 40-minute video through `_run_job` with a stand-in judge.

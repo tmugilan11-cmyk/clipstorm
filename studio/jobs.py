@@ -112,6 +112,7 @@ on_clip_ready: list = []   # callbacks (job, clip), run once when a clip first f
 # one builds its story part by part as it is judged: on the owner's 5 h 45 min stream the read-ahead was 36 long AI
 # answers (about 2.5 minutes each, two at a time on that service), so no clip appeared for over 40 minutes.
 WHOLE_STORY_MAX = 3600
+JUDGE_AHEAD = 3     # parts of a video judged at the same time
 ALL_CLIPS = 100     # what "0 = as many as possible" stops at, the same cap one live recording has
 DEFAULTS = {"max_clips": 6, "min_len": 15, "max_len": 60, "style": "bounce", "layout": "blur", "quality": 1080,
             "range_start": None, "range_end": None, "captions": True, "format": None, "moment_labels": False,
@@ -1193,48 +1194,25 @@ def _run_job(job):
         sig = signals.youtube((job.get("source") or {}).get("url") or "")
     except Exception:
         sig = {}
-    for bi, (a, b) in enumerate(blocks):
-        if job.get("stop"):               # the person pressed Stop: no more parts are read
-            break
-        if bi < done_blocks:
-            continue                      # transcribed and checked by the AI before the restart
-        shift = a / 16000
-        where = f" (minute {round((a - lo) / 16000 / 60)} of {round(span / 60)})" if len(blocks) > 1 else ""
-        if yt:
-            _set(job, stage="Reading the transcript" + where)
-            bw = [dict(w, s=round(w["s"] - shift, 2), e=round(w["e"] - shift, 2)) for w in yt[0] if a / 16000 <= w["s"] < b / 16000]
-        else:
-            _set(job, stage="Writing the transcript" + where)
-            now_on[0] = bi
-            hear(bi)
-            hear(bi + 1)
-            bw = heard.pop(bi).result()
-        _set(job, progress=max(job["progress"], 0.14 + 0.78 * (b - lo) / max(1, hi - lo)),
-             heard_to=round((b - lo) / 16000 + lo / 16000, 1), blocks_done=bi + 1)
-        words += [dict(w, s=round(w["s"] + shift, 2), e=round(w["e"] + shift, 2)) for w in bw]
-        (d / "words.json").write_text(json.dumps(words), encoding="utf-8")
-        if job.get("stop"):               # Stop was pressed while this part was being written: do not judge it
-            break
-        _set(job, stage="Finding the best moments" + where, word_count=len(words))
-        # 0 means "as many good clips as there are": every block is judged and every strong find is kept, up to
-        # ALL_CLIPS so one very long video cannot flood the page.
-        left = (int(o["max_clips"]) or ALL_CLIPS) - len(job["clips"])
-        if left <= 0 or len(bw) < 8:
+    # Parts are judged a few at a time (`JUDGE_AHEAD`): the AI is a wait on the network, and one part at a time left
+    # a 5 h 45 min stream at about 2.5 minutes a part. Their clips are still added in the order of the video, and a
+    # part only counts as done (for a restart) once every part before it is done.
+    judges = ThreadPoolExecutor(JUDGE_AHEAD, thread_name_prefix="judge")
+    waiting = []          # (part, its start, its end, its shift, the judging) in the order of the video
+    whose = usage.context()
+
+    def _judge_block(*args, **kw):
+        usage.set_context(*whose)
+        return ctx.bind(brain.find_clips)(*args, **kw)
+
+    def take(bi, a, b, shift, fut):
+        nonlocal tokens, model, face
+        if fut is None:
             job["done_blocks"] = bi + 1
             save(job)
-            _set(job, blocks_done=bi + 1)
-            continue
-        quota = max(1, math.ceil(left / (len(blocks) - bi)))
-        s0 = int((a - lo) / 16000)
-        found, ai = brain.find_clips(bw, db[s0: s0 + int((b - a) / 16000) + 1], (b - a) / 16000, job["title"],
-                                     job["uploader"], quota, int(o["min_len"]), int(o["max_len"]), notes.append, game=game,
-                                     hook_words=_hook_words(job), min_score=o.get("min_score"),
-                                     focus=((creators.get(job["creator"]) or {}).get("clip_focus") or "")
-                                     if job.get("creator") else "",
-                                     context_for=lambda s_, e_, _a=a: signals.brief(sig, _a / 16000 + s_, _a / 16000 + e_, shift=_a / 16000),
-                                     memory=d / "story.json", whole=yt[0] if yt and span <= WHOLE_STORY_MAX else None, at=shift,
-                                     source=lambda: job.get("source_path"), made=list(job["clips"]),
-                                     creator=job.get("creator"))
+            _set(job, blocks_done=max(bi + 1, int(job.get("blocks_done") or 0)))
+            return
+        found, ai = fut.result()
         tokens += ai.get("tokens", 0)
         model = ai.get("model") or model
         if ai.get("note"):
@@ -1272,6 +1250,57 @@ def _run_job(job):
         job["ai"] = {"model": model, "tokens": tokens, "note": "", "log": notes[-5:]}
         job["done_blocks"] = bi + 1       # a restart from here on carries on with the next part
         save(job)
+
+    def take_ready(everything=False):
+        while waiting and (everything or waiting[0][4] is None or waiting[0][4].done()):
+            take(*waiting.pop(0))
+
+    for bi, (a, b) in enumerate(blocks):
+        if job.get("stop"):               # the person pressed Stop: no more parts are read
+            break
+        if bi < done_blocks:
+            continue                      # transcribed and checked by the AI before the restart
+        shift = a / 16000
+        where = f" (minute {round((a - lo) / 16000 / 60)} of {round(span / 60)})" if len(blocks) > 1 else ""
+        if yt:
+            _set(job, stage="Reading the transcript" + where)
+            bw = [dict(w, s=round(w["s"] - shift, 2), e=round(w["e"] - shift, 2)) for w in yt[0] if a / 16000 <= w["s"] < b / 16000]
+        else:
+            _set(job, stage="Writing the transcript" + where)
+            now_on[0] = bi
+            hear(bi)
+            hear(bi + 1)
+            bw = heard.pop(bi).result()
+        _set(job, progress=max(job["progress"], 0.14 + 0.78 * (b - lo) / max(1, hi - lo)),
+             heard_to=round((b - lo) / 16000 + lo / 16000, 1), blocks_done=bi + 1)
+        words += [dict(w, s=round(w["s"] + shift, 2), e=round(w["e"] + shift, 2)) for w in bw]
+        (d / "words.json").write_text(json.dumps(words), encoding="utf-8")
+        if job.get("stop"):               # Stop was pressed while this part was being written: do not judge it
+            break
+        _set(job, stage="Finding the best moments" + where, word_count=len(words))
+        # 0 means "as many good clips as there are": every block is judged and every strong find is kept, up to
+        # ALL_CLIPS so one very long video cannot flood the page.
+        left = (int(o["max_clips"]) or ALL_CLIPS) - len(job["clips"])
+        if left <= 0 or len(bw) < 8:
+            waiting.append((bi, a, b, shift, None))     # nothing to judge, but the parts are still finished in order
+            take_ready()
+            continue
+        quota = max(1, math.ceil(left / (len(blocks) - bi)))
+        s0 = int((a - lo) / 16000)
+        fut = judges.submit(_judge_block, bw, db[s0: s0 + int((b - a) / 16000) + 1], (b - a) / 16000, job["title"],
+                                     job["uploader"], quota, int(o["min_len"]), int(o["max_len"]), notes.append, game=game,
+                                     hook_words=_hook_words(job), min_score=o.get("min_score"),
+                                     focus=((creators.get(job["creator"]) or {}).get("clip_focus") or "")
+                                     if job.get("creator") else "",
+                                     context_for=lambda s_, e_, _a=a: signals.brief(sig, _a / 16000 + s_, _a / 16000 + e_, shift=_a / 16000),
+                                     memory=d / "story.json", whole=yt[0] if yt and span <= WHOLE_STORY_MAX else None, at=shift,
+                                     source=lambda: job.get("source_path"), made=list(job["clips"]),
+                                     creator=job.get("creator"))
+        waiting.append((bi, a, b, shift, fut))
+        while len(waiting) > JUDGE_AHEAD:               # never more than a few parts judged ahead of the oldest
+            take(*waiting.pop(0))
+        take_ready()
+    take_ready(everything=True)
     if job.get("stop"):
         ahead.shutdown(wait=False, cancel_futures=True)     # the transcript of the next part is no longer needed
     if futures:
@@ -1284,6 +1313,7 @@ def _run_job(job):
         words.sort(key=lambda w: w["s"])
         (d / "words.json").write_text(json.dumps(words), encoding="utf-8")
     renders.shutdown(wait=False)
+    judges.shutdown(wait=False)
     ahead.shutdown(wait=False)
     fetch.shutdown(wait=False)
     del audio

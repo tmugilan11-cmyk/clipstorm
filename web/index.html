@@ -1877,10 +1877,14 @@ document.addEventListener("click", e => {
     p.querySelector("input[type=hidden]").dispatchEvent(new Event("change", {bubbles: true})); return; }
   if (!e.target.closest(".pick") || e.target.closest(".pick-new")) closePicks();
   const sg = e.target.closest("[data-seg]");
-  if (sg && !sg.disabled) { $("#" + sg.dataset.seg).value = sg.dataset.v;
+  const field = sg && /^[A-Za-z][\w-]*$/.test(sg.dataset.seg) ? $("#" + sg.dataset.seg) : null;
+  if (sg && field && !sg.disabled) { field.value = sg.dataset.v;
     sg.parentElement.querySelectorAll("[data-seg]").forEach(b => b.setAttribute("aria-pressed", String(b === sg))); return; }
-  const st = e.target.closest("[data-step]");
-  if (st) { const i = $("#" + st.dataset.step), s = Number(i.step) || 1, d = Number(st.dataset.d);
+  // Only the +/- buttons of a number box: they carry data-d. Other things use data-step too (the progress chips of a
+  // running video say data-step="0"), and treating them as a box looked up "#0" and showed an error.
+  const st = e.target.closest("[data-step][data-d]");
+  const box = st && /^[A-Za-z][\w-]*$/.test(st.dataset.step) ? $("#" + st.dataset.step) : null;
+  if (box) { const i = box, s = Number(i.step) || 1, d = Number(st.dataset.d);
     const v = Math.min(Number(i.max), Math.max(Number(i.min), (Number(i.value) || 0) + d * s)); i.value = v; }
 });
 document.addEventListener("keydown", e => {

@@ -1203,7 +1203,7 @@ def _run_job(job):
 
     def _judge_block(*args, **kw):
         usage.set_context(*whose)
-        return ctx.bind(brain.find_clips)(*args, **kw)
+        return brain.find_clips(*args, **kw)
 
     def take(bi, a, b, shift, fut):
         nonlocal tokens, model, face
@@ -1287,7 +1287,7 @@ def _run_job(job):
             continue
         quota = max(1, math.ceil(left / (len(blocks) - bi)))
         s0 = int((a - lo) / 16000)
-        fut = judges.submit(_judge_block, bw, db[s0: s0 + int((b - a) / 16000) + 1], (b - a) / 16000, job["title"],
+        fut = judges.submit(ctx.bind(_judge_block), bw, db[s0: s0 + int((b - a) / 16000) + 1], (b - a) / 16000, job["title"],
                                      job["uploader"], quota, int(o["min_len"]), int(o["max_len"]), notes.append, game=game,
                                      hook_words=_hook_words(job), min_score=o.get("min_score"),
                                      focus=((creators.get(job["creator"]) or {}).get("clip_focus") or "")

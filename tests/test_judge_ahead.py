@@ -40,7 +40,10 @@ def main():
     live, most, order = [0], [0], []
     lock = threading.Lock()
 
+    whose = []
+
     def fake_judge(words, db, duration, *a, at=0.0, **k):
+        whose.append(ctx.uid_or_none())
         with lock:
             live[0] += 1
             most[0] = max(most[0], live[0])
@@ -71,6 +74,7 @@ def main():
     check("the clips are still in the order of the video", starts == sorted(starts) and len(starts) == 4, starts)
     check("their numbers follow that order", [c["id"] for c in job["clips"]] == ["clip01", "clip02", "clip03", "clip04"],
           [c["id"] for c in job["clips"]])
+    check("each part is judged as the video's owner (its AI use is counted)", whose and set(whose) == {"u_aheadtest"}, set(whose))
     check("every part counts as done", job.get("done_blocks") == 4, job.get("done_blocks"))
     print()
     if FAILED:

@@ -108,6 +108,10 @@ _by_user: dict = {}                       # user -> {job id: job}: listing one p
 _lock = threading.RLock()
 on_clip_ready: list = []   # callbacks (job, clip), run once when a clip first finishes
 
+# The story of a whole video is read before its first part is judged only when the video is under an hour. A longer
+# one builds its story part by part as it is judged: on the owner's 5 h 45 min stream the read-ahead was 36 long AI
+# answers (about 2.5 minutes each, two at a time on that service), so no clip appeared for over 40 minutes.
+WHOLE_STORY_MAX = 3600
 ALL_CLIPS = 100     # what "0 = as many as possible" stops at, the same cap one live recording has
 DEFAULTS = {"max_clips": 6, "min_len": 15, "max_len": 60, "style": "bounce", "layout": "blur", "quality": 1080,
             "range_start": None, "range_end": None, "captions": True, "format": None, "moment_labels": False,
@@ -1225,7 +1229,7 @@ def _run_job(job):
                                      focus=((creators.get(job["creator"]) or {}).get("clip_focus") or "")
                                      if job.get("creator") else "",
                                      context_for=lambda s_, e_, _a=a: signals.brief(sig, _a / 16000 + s_, _a / 16000 + e_, shift=_a / 16000),
-                                     memory=d / "story.json", whole=yt[0] if yt else None, at=shift,
+                                     memory=d / "story.json", whole=yt[0] if yt and span <= WHOLE_STORY_MAX else None, at=shift,
                                      source=lambda: job.get("source_path"), made=list(job["clips"]),
                                      creator=job.get("creator"))
         tokens += ai.get("tokens", 0)

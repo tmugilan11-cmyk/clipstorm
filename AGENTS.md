@@ -352,3 +352,9 @@ video link failed with "YouTube isn't letting PeakCut download videos right now"
 (`source_address` 0.0.0.0) is passed to every yt-dlp call: `media._ydl`, `profiles`, `signals`, `web`, `sound_web`.
 Measured after the change on the same stream: info in 2.9 s, a 6 s section at 1080p in 25 s and at 1440p in 47 s.
 `PEAKCUT_YT_IPV4=0` turns it off.
+
+**A long video's story is built as it goes.** `jobs.WHOLE_STORY_MAX` (1 hour): only a video shorter than that has its
+whole story read before the first part is judged; a longer one moves the story on part by part
+(`judge_story.advance`). The read-ahead of the owner's 5 h 45 min stream was 36 answers of about 4,000 words each,
+two at a time on that service, and no clip appeared for over 40 minutes. The whole-video read itself is a pool of 10
+(`judge_story.WORKERS`), not batches that wait for their slowest answer.

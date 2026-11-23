@@ -1,5 +1,6 @@
 """Getting video in: link download, probing, audio extraction, loudness."""
 import contextlib
+import os
 import json
 import re
 import subprocess
@@ -95,12 +96,19 @@ class _Quiet:
     def error(self, m): pass
 
 
+# YouTube can refuse one route of a machine and not the other. On the owner's PC (2026-11-23) every request over IPv6
+# got "Sign in to confirm you're not a bot" while the same request over IPv4 went straight through, so every video
+# download failed. All of PeakCut's YouTube requests therefore go over IPv4 (`source_address` 0.0.0.0), which is
+# what the live recorder already fell back to. PEAKCUT_YT_IPV4=0 turns it off.
+YT_NET = {"source_address": "0.0.0.0"} if os.environ.get("PEAKCUT_YT_IPV4", "1") != "0" else {}
+
+
 def _ydl(opts):
     import yt_dlp
     # a channel or playlist link is answered as "a list" straight away, never walked video by video
     return yt_dlp.YoutubeDL({"noplaylist": True, "quiet": True, "no_warnings": True, "logger": _Quiet(),
                              "extract_flat": "in_playlist", "playlistend": 1, "socket_timeout": 20,
-                             "concurrent_fragment_downloads": 4, **opts})
+                             "concurrent_fragment_downloads": 4, **YT_NET, **opts})
 
 
 def _video_format(height):

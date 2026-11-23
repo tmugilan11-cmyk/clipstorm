@@ -34,7 +34,7 @@ from typing import Dict, List, Optional
 
 import httpx
 
-from . import config
+from . import config, media
 
 KEEP = 7 * 24 * 3600            # a week: popularity moves slowly, and the owner asked for a weekly refresh
 KEEP_EMPTY = 24 * 3600          # an empty answer is asked again after a day: the site may have been down
@@ -299,7 +299,7 @@ def youtube(query: str, n: int = 8) -> List[dict]:
     try:
         import yt_dlp
         opts = {"quiet": True, "no_warnings": True, "extract_flat": True, "skip_download": True,
-                "logger": _Quiet(), "socket_timeout": 15}
+                "logger": _Quiet(), "socket_timeout": 15, **media.YT_NET}
         with yt_dlp.YoutubeDL(opts) as y:
             info = y.extract_info(f"ytsearch{max(1, min(20, n))}:{q}", download=False)
         for e in (info or {}).get("entries") or []:

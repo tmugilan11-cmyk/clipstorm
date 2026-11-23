@@ -11,7 +11,7 @@ import time
 import urllib.request
 from urllib.parse import urlparse
 
-from . import creators, ctx
+from . import creators, ctx, media
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
       "Accept-Language": "en-US,en;q=0.9"}
@@ -191,7 +191,7 @@ def _ydl_info(url: str) -> dict:
     import yt_dlp
     from .live import _Quiet
     with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True, "skip_download": True, "noplaylist": True,
-                           "logger": _Quiet(), "socket_timeout": 10}) as y:
+                           "logger": _Quiet(), "socket_timeout": 10, **media.YT_NET}) as y:
         return y.extract_info(url, download=False) or {}
 
 

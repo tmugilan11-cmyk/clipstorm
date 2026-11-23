@@ -22,7 +22,7 @@ import time
 import urllib.parse
 import urllib.request
 
-from . import config
+from . import config, media
 
 SEARCH_KEEP = 3 * 24 * 3600
 CLIPS_KEEP = 7 * 24 * 3600
@@ -123,7 +123,7 @@ def top_clips(name: str, game: str = "", n: int = 12) -> list:
     try:
         import yt_dlp
         opts = {"quiet": True, "no_warnings": True, "extract_flat": True, "skip_download": True,
-                "logger": _Quiet(), "socket_timeout": 15}
+                "logger": _Quiet(), "socket_timeout": 15, **media.YT_NET}
         with yt_dlp.YoutubeDL(opts) as y:
             for ask in asks:
                 try:

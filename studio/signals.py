@@ -7,7 +7,7 @@ import statistics
 import threading
 import time
 
-from . import config
+from . import config, media
 
 _TTL = 24 * 3600
 _mem = {}
@@ -80,7 +80,7 @@ def youtube(url):
             return {k: (list(map(tuple, v)) if isinstance(v, list) else v) for k, v in sig.items()}
         import yt_dlp
         with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True, "skip_download": True, "noplaylist": True,
-                               "socket_timeout": 20, "getcomments": True,
+                               "socket_timeout": 20, "getcomments": True, **media.YT_NET,
                                "extractor_args": {"youtube": {"max_comments": ["120"], "comment_sort": ["top"]}}}) as y:
             info = y.extract_info(url, download=False)
         sig = _parse(info or {})

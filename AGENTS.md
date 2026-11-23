@@ -345,3 +345,10 @@ handshake timeout at part 28 of 35 ended the video and left 21 found clips unmad
 "Carry on from where it stopped" (`POST /api/jobs/{jid}/carry-on` -> `jobs.carry_on`): it is queued with `resume`, keeps
 its transcript, clips and AI answers, re-queues only the clips marked `jobs.UNMADE`, and goes on from `done_blocks`.
 Checked by `tests/test_carry_on.py`.
+
+**Every YouTube request goes over IPv4.** On the owner's PC (Cloudflare WARP, 2026-11-23) YouTube answered every
+request over IPv6 with "Sign in to confirm you're not a bot" while the same request over IPv4 went through, so every
+video link failed with "YouTube isn't letting PeakCut download videos right now". `media.YT_NET`
+(`source_address` 0.0.0.0) is passed to every yt-dlp call: `media._ydl`, `profiles`, `signals`, `web`, `sound_web`.
+Measured after the change on the same stream: info in 2.9 s, a 6 s section at 1080p in 25 s and at 1440p in 47 s.
+`PEAKCUT_YT_IPV4=0` turns it off.

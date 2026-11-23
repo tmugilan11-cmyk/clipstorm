@@ -28,8 +28,13 @@ class Resp:
 def main():
     check("a scout does not think", brain.think_for("Video: scout (the talk)") == "off")
     check("the story does not think", brain.think_for("Video: story (a part)") == "off")
-    check("a critic thinks briefly", brain.think_for("Video: critic (the editor)") == "low")
-    check("the showrunner thinks briefly", brain.think_for("Video: showrunner") == "low")
+    check("by default a critic does not think either", brain.think_for("Video: critic (the editor)") == "off")
+    import os
+    os.environ["PEAKCUT_AI_THINK_CRITICS"] = "low"
+    check("a critic thinks briefly when asked", brain.think_for("Video: critic (the editor)") == "low")
+    check("the showrunner thinks briefly when asked", brain.think_for("Video: showrunner") == "low")
+    check("a scout still does not", brain.think_for("Video: scout (the talk)") == "off")
+    del os.environ["PEAKCUT_AI_THINK_CRITICS"]
 
     sent = []
     real = (ai.httpx.post, ai.base_url, ai.key, ai._openai_body)

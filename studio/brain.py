@@ -1,6 +1,7 @@
 """Picks clip-worthy moments. The AI reads the timestamped transcript plus loudness marks."""
 import difflib
 import json
+import os
 import math
 import re
 import time
@@ -187,12 +188,18 @@ def loud_zscore(db):
 # posted, so they think briefly; everything else (the story, the reader, the scouts, hooks, captions) already writes
 # its reasons into its answer and does not need to think first. Measured on deepseek-v4.1-flash: 76 s thinking in
 # full, 26 s thinking briefly, 6-14 s not thinking, for the same scout-sized question.
+#
+# Measured again on the owner's 5 h 45 min stream: "think briefly" is not brief on deepseek-v4.1-flash - one critic
+# wrote 9,500 tokens and took 3-5 minutes, so a 10-minute part of the video took about 9 minutes to judge. So by
+# default nothing thinks; PEAKCUT_AI_THINK_CRITICS=low gives the critics and the final desk their brief thinking back.
 _THINK_LOW = ("critic", "showrunner", "sign-off", "designer", "improving the settings")
 
 
 def think_for(purpose: str):
     p = (purpose or "").lower()
-    return "low" if any(k in p for k in _THINK_LOW) else "off"
+    if os.environ.get("PEAKCUT_AI_THINK_CRITICS", "off") == "low" and any(k in p for k in _THINK_LOW):
+        return "low"
+    return "off"
 
 
 def ask_ai(prompt, schema=None, purpose="AI call", timeout=None):

@@ -374,3 +374,6 @@ challenge solver (`yt-dlp-ejs` + node): the PC was on Cloudflare WARP (`cloudfla
 (turn the VPN off or exclude youtube.com and googlevideo.com, then press Carry on). Carry on clears the refusal pause,
 because pressing it means the person fixed something; it shows on every failed video and the server explains when
 there is nothing to carry on from.
+By default nothing thinks: "think briefly" was not brief on deepseek-v4.1-flash (one critic wrote 9,500 tokens in 3-5
+minutes, so a 10-minute part took about 9 minutes to judge); with thinking off the same critic answers in 15 s.
+`PEAKCUT_AI_THINK_CRITICS=low` gives the critics, the showrunner and the sound sign-off their brief thinking back.

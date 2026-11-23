@@ -366,3 +366,11 @@ round think briefly (`reasoning_effort: low`); everything else (story, reader, s
 (`chat_template_kwargs.enable_thinking=false`, `thinking.type=disabled`). `ai.thinking(level)` carries it to
 `ai._openai`; a service that answers 400/422 to it is remembered in `ai._think_refused` and never sent it again.
 `PEAKCUT_AI_THINK=full` turns it off. Checked by `tests/test_thinking.py`.
+
+**YouTube blocks VPN addresses, and only the person can fix that.** Later the same day both routes (IPv4 and IPv6)
+of the owner's PC got "Sign in to confirm you're not a bot" from every YouTube player, with or without yt-dlp's
+challenge solver (`yt-dlp-ejs` + node): the PC was on Cloudflare WARP (`cloudflare.com/cdn-cgi/trace` says
+`warp=on`), whose shared addresses YouTube flags after many requests. `media.YT_BLOCKED` now says so and what to do
+(turn the VPN off or exclude youtube.com and googlevideo.com, then press Carry on). Carry on clears the refusal pause,
+because pressing it means the person fixed something; it shows on every failed video and the server explains when
+there is nothing to carry on from.

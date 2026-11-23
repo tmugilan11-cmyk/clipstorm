@@ -20,8 +20,10 @@ NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 # minutes, with a clear message, instead of each one waiting to fail. Then the next link simply tries again.
 YT_PAUSE = 600
 _yt_refused_until = 0.0
-YT_BLOCKED = ("YouTube isn't letting PeakCut download videos right now. Upload the video file instead, or use a "
-              "Twitch or Kick link. YouTube links will be tried again in a few minutes.")
+YT_BLOCKED = ("YouTube isn't letting PeakCut download videos right now (it asked to \"confirm you're not a bot\"). "
+              "This usually means a VPN such as Cloudflare WARP is on: turn it off, or exclude youtube.com and "
+              "googlevideo.com from it, then press Carry on. Or upload the video file instead. YouTube links are "
+              "tried again in a few minutes.")
 _BOT_CHECK = re.compile(r"not a bot|confirm you.?re not|sign in to confirm(?! your age)", re.I)
 
 

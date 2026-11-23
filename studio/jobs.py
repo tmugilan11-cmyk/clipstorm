@@ -990,6 +990,9 @@ def carry_on(jid) -> dict:
     for c in job.get("clips", []):
         if c.get("status") == "error" and c.get("error") == UNMADE:
             c.update(status="queued", error=None)
+    # The person pressing Carry on is the signal that they fixed what was wrong (a VPN turned off, say), so YouTube is
+    # tried at once instead of waiting out the pause a refusal starts.
+    media._yt_refused_until = 0.0
     _set(job, status="queued", stage="Carrying on from where it stopped", error=None, resume=True, stop=False)
     _q.put(("job", jid, None), user=job["user"])
     return {"ok": True}

@@ -31,7 +31,7 @@ from . import brain, ctx, games, usage
 
 MOST = {"cast": 10, "jokes": 6, "setups": 8, "beats": 14}
 CHUNK = 600            # seconds of transcript in one read when a whole video is read at once
-WORKERS = 6            # parts of a whole video read at the same time
+WORKERS = 10           # parts of a whole video read at the same time
 
 READ = """You keep the story of a long {what} for a team that cuts it into short clips. The team reads a few
 minutes at a time, so your notes are the only way they know who is who and what has been going on.
@@ -232,13 +232,12 @@ def build(words, title="", uploader="", game=None, timeout=None, log=None, chunk
             if log:
                 log(f"One part of the story could not be read ({a:.0f}-{b:.0f}s): {e}")
 
-    for k in range(0, len(parts), WORKERS):
-        ts = [threading.Thread(target=ctx.bind(one), args=(i, a, b), daemon=True)
-              for i, (a, b) in list(enumerate(parts))[k:k + WORKERS]]
-        for th in ts:
-            th.start()
-        for th in ts:
-            th.join()
+    # A pool, not batches: each reader takes the next part as soon as it is free. In batches every group waited for
+    # its slowest answer, and with a slow model the whole 5 h 45 min stream took over an hour before the first clip.
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(min(WORKERS, len(parts)), thread_name_prefix="story") as pool:
+        for fut in [pool.submit(ctx.bind(one), i, a, b) for i, (a, b) in enumerate(parts)]:
+            fut.result()
     story = empty()
     story["whole"] = True
     notes = []

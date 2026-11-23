@@ -77,7 +77,7 @@
     /* a placed sound: a thin line at its exact moment, and a label beside it */
     .aed-chip{position:absolute;top:0;bottom:0;width:0;border-left:2px solid var(--brand);cursor:grab;user-select:none}
     .aed-chip .aed-tag{position:absolute;left:0;width:172px;max-width:46vw;display:grid;gap:3px;padding:6px 8px;
-      border:1px solid var(--brand);border-left:0;border-radius:0 7px 7px 0;background:#2A1A12;color:#F5F5F5;font-size:12px;line-height:1.25}
+      border:1px solid var(--brand);border-left:0;border-radius:0 7px 7px 0;background:#1F1939;color:#F5F5F5;font-size:12px;line-height:1.25}
     .aed-chip.flip .aed-tag{left:auto;right:0;border-left:1px solid var(--brand);border-right:0;border-radius:7px 0 0 7px}
     .aed-chip .t{font-weight:700;font-variant-numeric:tabular-nums;color:var(--brand-deep);font-size:12px}
     .aed-chip .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
@@ -144,7 +144,7 @@
     .aed-mini:hover{border-color:var(--brand);color:var(--brand-deep)}
     .aed-cue select{height:28px;padding:0 6px;border:1px solid var(--line-2);border-radius:6px;
       background:var(--field);color:var(--text);font:inherit;font-size:12px}
-    .aed-ghost{position:fixed;z-index:99;pointer-events:none;background:#2A1A12;border:1px solid var(--brand);
+    .aed-ghost{position:fixed;z-index:99;pointer-events:none;background:#1F1939;border:1px solid var(--brand);
       border-radius:6px;color:#F5F5F5;font:12px/1.2 inherit;padding:3px 8px;opacity:.92}
     .aed-hint{font-size:12px;line-height:1.4;color:var(--dim);margin:0}
     @media (max-width:980px){.aed-body{grid-template-columns:minmax(0,1fr)}.aed-picker{position:static;max-height:none}}

@@ -19,7 +19,7 @@
   .pcauto-pre:empty { display: none; }
   .pcauto-note { margin: 0; font-size: 12px; color: var(--faint); }
   /* The warn panel sits on --brand-soft, so its ink is the light --brand-deep:
-     #FFB27A on #2A1B10 measures 9.4:1. The near-black --brand-ink measured
+     #C8BAFF on #20183F measures 9.4:1. The near-black --brand-ink measured
      1.15:1 on this background, which no one could read. */
   .pcauto-warn { margin: 0; padding: 9px 11px; border-left: 3px solid var(--brand);
     border-radius: 0 var(--r-sm) var(--r-sm) 0; background: var(--brand-soft);

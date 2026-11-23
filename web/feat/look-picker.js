@@ -185,9 +185,9 @@
 
   function lookCard(name, label, on, tab) {
     const row = LOOKS[name];
-    let style = "--lp-o:#000000;color:#FFFFFF", boxed = "", second = "color:#FF8B33", t = ["YOUR", "CAPTION"];
+    let style = "--lp-o:#000000;color:#FFFFFF", boxed = "", second = "color:#AF9BFF", t = ["YOUR", "CAPTION"];
     if (row) {
-      const base = hex(row[1], "#FFFFFF"), hl = hex(row[2], "#FF8B33"), out = hex(row[3], "#000000"), box = row[4] ? hex(row[4], "") : "";
+      const base = hex(row[1], "#FFFFFF"), hl = hex(row[2], "#AF9BFF"), out = hex(row[3], "#000000"), box = row[4] ? hex(row[4], "") : "";
       style = `font-family:'pk ${row[0]}',system-ui,sans-serif;--lp-o:${out};color:${base}`;
       second = box ? `background:${box};color:${base}` : `color:${hl}`;
       boxed = box ? " boxed" : "";

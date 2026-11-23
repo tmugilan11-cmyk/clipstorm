@@ -6,12 +6,12 @@
   window.PeakCut.css("pill", `
 /* The pill sits on the dark topbar, so the resting states are dark tints with pale
  * ink and the hover states flip to light grounds with dark ink. Every pair below is
- * measured: #FFB27A on --brand-soft 9.43, #7A3406 on #FFEEDF 7.99, var(--bad) on
+ * measured: #C8BAFF on --brand-soft 9.43, #360BE3 on #F2EFFF 7.99, var(--bad) on
  * --bad-soft 6.25, #9E121B on #FFE9EA 7.08, --dim on --line 7.49, and #3A2C25 on
  * #F1ECE7 11.42. The flash stops are dark for the same reason (7.0:1 at brightest);
  * a light flash under pale ink measured 1.47:1. */
 .pcrun.btn{flex:none;gap:7px;border-color:var(--brand-line);background:var(--brand-soft);color:var(--brand-deep);font-weight:600}
-.pcrun.btn:hover{background:#FFEEDF;border-color:#FFC79E;color:#7A3406}
+.pcrun.btn:hover{background:#F2EFFF;border-color:#D6CCFF;color:#360BE3}
 .pcrun.btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .pcrun.btn.is-rec{border-color:#FFD3D5;background:var(--bad-soft);color:var(--bad)}
 .pcrun.btn.is-rec:hover{border-color:#FFB9BD;background:#FFE9EA;color:#9E121B}
@@ -31,10 +31,10 @@
  * used to be: the ink on the pill is pale (--brand-deep), so a light ground left the label at 1.47:1
  * for the whole animation. These stops keep the pale ink readable (7.0:1 at the brightest). */
 .pcrun-flash{animation:pcrunflash 1.8s ease-out 1}
-@keyframes pcrunflash{0%{background-color:#3A2415;border-color:#7A4A22}55%{background-color:#2E1D12;border-color:#5A3618}100%{background-color:transparent;border-color:var(--line)}}
+@keyframes pcrunflash{0%{background-color:#2B2057;border-color:#563AC8}55%{background-color:#221A43;border-color:#3F2998}100%{background-color:transparent;border-color:var(--line)}}
 @media (max-width:760px){.pcrun.has2 .pcrun-2{display:none}}
 @media (max-width:560px){.pcrun.btn{height:30px;padding:0 9px;font-size:12px;gap:6px}.pcrun .pcrun-dot{width:7px;height:7px}}
-@media (prefers-reduced-motion:reduce){.pcrun .pcrun-dot::after{display:none}.pcrun-flash{animation:none;background-color:#2E1D12;border-color:#5A3618}}
+@media (prefers-reduced-motion:reduce){.pcrun .pcrun-dot::after{display:none}.pcrun-flash{animation:none;background-color:#221A43;border-color:#3F2998}}
   `);
 
   /* ---- what is happening ------------------------------------------------ */

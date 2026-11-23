@@ -159,7 +159,7 @@
     { k: "kept", label: "Saved", c: "#B45309" },
     { k: "liked", label: "Liked", c: "#9D174D" },
     { k: "bookmarked", label: "Bookmarked", c: "#1D4ED8" },
-    { k: "mine", label: "Uploaded by me", c: "#8A5A2B" },
+    { k: "mine", label: "Uploaded by me", c: "#6850C8" },
   ];
 
   const likeKey = "peakcut.audio.taste";
@@ -423,7 +423,7 @@
     g.clearRect(0, 0, w, h);
     const top = Math.max(0.02, Math.max.apply(null, heights));
     const bw = w / heights.length;
-    g.fillStyle = "#FF8B33";
+    g.fillStyle = "#AF9BFF";
     for (let i = 0; i < heights.length; i++) {
       const v = heights[i] / top;
       const bh = Math.max(1.5, v * (h - 6));

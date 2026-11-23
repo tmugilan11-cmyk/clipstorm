@@ -1,4 +1,5 @@
 """Turns a time range into a vertical clip: 9:16 layout, bouncy word captions, hook title, cover."""
+import json
 import re
 import shutil
 import subprocess
@@ -369,7 +370,7 @@ PIP_W = 380            # how wide the facecam is in the 1080-wide frame
 PIP_MARGIN = 26
 
 
-def _filter(layout, fg_h, facecam=None, bg="", keep=None, src_w=0, src_h=0, cam_cx=None):
+def _filter(layout, fg_h, facecam=None, bg="", keep=None, src_w=0, src_h=0, cam_cx=None, lead=None, length=None):
     """The picture. `bg` only matters when the video does not fill the frame: "" keeps the blurred copy of the video
     behind it, "black" or "white" paints that space a flat colour instead.
 
@@ -380,7 +381,7 @@ def _filter(layout, fg_h, facecam=None, bg="", keep=None, src_w=0, src_h=0, cam_
     # A cleanup cut re-times the picture first, before any layout work, so the layout sees a clip that is already the
     # right length. `setpts` renumbers the kept frames from zero, which is what makes the sound and the captions line
     # up afterwards.
-    head = f"[0:v]fps={config.OUT_FPS}"
+    head = f"[0:v]{_trim('', lead, length)}fps={config.OUT_FPS}"
     tail = ""
     spans = [(float(a), float(b)) for a, b in (keep or []) if float(b) - float(a) > 0.01]
     if spans:
@@ -582,7 +583,49 @@ def _made(parent: Path) -> Path:
 _workdir = _short_workdir     # the name render_clip uses; kept separate so a test can stand in for it
 
 
-def _audio_chain(keep=None, mute=None) -> str:
+PREROLL = 12.0     # seconds decoded before a clip's start, so the picture has a keyframe to start from
+
+
+def _trim(kind: str, lead, length) -> str:
+    """Cut picture (`kind` "") or sound (`kind` "a") to the clip, both on the same clock.
+
+    Why this exists: ffmpeg's `-ss` before the input lands a .ts stream (every live clip) AFTER the asked time,
+    and the picture then waits for the next keyframe - up to two seconds on a stream - while the sound starts at
+    once. The finished clip had his voice before his lips. So the input is opened `PREROLL` seconds early and both
+    tracks are trimmed here, at the same timestamp, and renumbered by that fixed amount (never by "whatever frame
+    came first", which is what hid the gap before)."""
+    if lead is None:
+        return ""
+    lead, length = float(lead), float(length)
+    return (f"{kind}trim=start={lead:.3f}:duration={length:.3f},"
+            f"{kind}setpts=PTS-{lead:.3f}/TB,")
+
+
+def _cut_window(start: float, end: float):
+    """(where to open the input, how far into it the clip starts, how long it is)."""
+    start, end = float(start), float(end)
+    pre = max(0.0, start - PREROLL)
+    return pre, start - pre, max(0.05, end - start)
+
+
+def av_gap(path) -> float:
+    """How far apart a finished file's picture and sound are, in seconds (start times and lengths). 0 is in step."""
+    try:
+        p = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=codec_type,start_time,duration",
+                            "-of", "json", str(path)], capture_output=True, text=True, timeout=60,
+                           creationflags=NO_WINDOW)
+        s = {x["codec_type"]: x for x in json.loads(p.stdout or "{}").get("streams", [])}
+        v, a = s.get("video"), s.get("audio")
+        if not v or not a:
+            return 0.0
+        st = abs(float(v.get("start_time") or 0) - float(a.get("start_time") or 0))
+        du = abs(float(v.get("duration") or 0) - float(a.get("duration") or 0))
+        return max(st, du)
+    except Exception:  # noqa: BLE001 - a check that cannot run says nothing
+        return 0.0
+
+
+def _audio_chain(keep=None, mute=None, lead=None, length=None) -> str:
     """The pieces of the sound that survive, and the moments that are silenced, as one filter chain.
 
     `keep` is the cleanup plan: the sound is cut exactly where the picture was, with `aselect` choosing the matching
@@ -594,6 +637,7 @@ def _audio_chain(keep=None, mute=None) -> str:
     if spans:
         test = "+".join(f"between(t,{a:.3f},{b:.3f})" for a, b in spans)
         chain = f"aselect='{test}',asetpts=N/SR/TB," + chain
+    chain = _trim("a", lead, length) + chain
     for a, b in (mute or []):
         if float(b) > float(a):
             chain += f",volume=volume=0:enable='between(t,{float(a):.3f},{float(b):.3f})'"
@@ -618,36 +662,50 @@ def _render_in(work: Path, src: Path, out_dir: Path, name: str, start, end, layo
     (work / "f").mkdir()
     for f in config.FONTS_DIR.glob("*.ttf"):
         shutil.copyfile(f, work / "f" / f.name)
-    fc = _filter(layout, fg_h, face, bg, keep, src_w, src_h, cam_cx) + f"[v0]ass={name}.ass:fontsdir=f[v]"
     # ffmpeg runs inside the short work folder, so the source has to be named in full or it is not found.
     src = Path(src).resolve()
-    if _has_audio(src):
-        quiet, sound = [], ["-map", "0:a:0", "-af", _audio_chain(keep, mute)]
-    else:
-        # A source with no sound at all (a screen recording, a picture-only stream piece) still makes a clip:
-        # it is given a silent track as long as its picture, so everything after this finds the sound it expects.
-        quiet = ["-f", "lavfi", "-t", f"{end - start:.2f}", "-i", "anullsrc=r=48000:cl=stereo"]
-        sound = ["-map", "1:a:0", "-shortest"]
-    base = (["ffmpeg", "-y", "-v", "error", "-ss", f"{start:.2f}", "-t", f"{end - start:.2f}", "-i", str(src)] + quiet +
-            ["-filter_complex", fc, "-map", "[v]"] + sound +
-            ["-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-movflags", "+faststart", "-pix_fmt"])
-    encoders = []
-    if _qsv_ok is not False:
-        encoders.append(("qsv", ["nv12", "-c:v", "h264_qsv"] + QSV_ARGS + PROFILE))
-    encoders.append(("x264", ["yuv420p", "-c:v", "libx264"] + X264_ARGS + PROFILE))
-    err = None
-    for label, enc in encoders:
-        p = subprocess.run(base + enc + [f"{name}.mp4"], cwd=work, capture_output=True, text=True,
-                           encoding="utf-8", errors="replace", creationflags=NO_WINDOW, timeout=RENDER_SECONDS)
-        if p.returncode == 0:
+    has_audio = _has_audio(src)
+
+    def attempt(pre, lead, length):
+        global _qsv_ok
+        fc = (_filter(layout, fg_h, face, bg, keep, src_w, src_h, cam_cx, lead, length)
+              + f"[v0]ass={name}.ass:fontsdir=f[v]")
+        if has_audio:
+            quiet, sound = [], ["-map", "0:a:0", "-af", _audio_chain(keep, mute, lead, length)]
+        else:
+            # A source with no sound at all (a screen recording, a picture-only stream piece) still makes a clip:
+            # it is given a silent track as long as its picture, so everything after this finds the sound it expects.
+            quiet = ["-f", "lavfi", "-t", f"{length:.3f}", "-i", "anullsrc=r=48000:cl=stereo"]
+            sound = ["-map", "1:a:0", "-shortest"]
+        seek = ["-ss", f"{pre:.3f}"] if pre > 0 else []
+        base = (["ffmpeg", "-y", "-v", "error"] + seek + ["-t", f"{lead + length + 1.0:.3f}", "-i", str(src)] + quiet +
+                ["-filter_complex", fc, "-map", "[v]"] + sound +
+                ["-t", f"{length:.3f}", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-movflags", "+faststart",
+                 "-pix_fmt"])
+        encoders = []
+        if _qsv_ok is not False:
+            encoders.append(("qsv", ["nv12", "-c:v", "h264_qsv"] + QSV_ARGS + PROFILE))
+        encoders.append(("x264", ["yuv420p", "-c:v", "libx264"] + X264_ARGS + PROFILE))
+        err = None
+        for label, enc in encoders:
+            p = subprocess.run(base + enc + [f"{name}.mp4"], cwd=work, capture_output=True, text=True,
+                               encoding="utf-8", errors="replace", creationflags=NO_WINDOW, timeout=RENDER_SECONDS)
+            if p.returncode == 0:
+                if label == "qsv":
+                    _qsv_ok = True
+                return
+            err = p.stderr[-1200:]
             if label == "qsv":
-                _qsv_ok = True
-            break
-        err = p.stderr[-1200:]
-        if label == "qsv":
-            _qsv_ok = False
-    else:
+                _qsv_ok = False
         raise RuntimeError(f"Render failed: {err}")
+
+    pre, lead, length = _cut_window(start, end)
+    attempt(pre, lead, length)
+    # The proof that picture and sound are in step is in the file itself. A source whose keyframes are further
+    # apart than PREROLL can still start the picture late; it is then decoded from its very beginning, which is
+    # slower but cannot miss.
+    if pre > 0 and av_gap(work / f"{name}.mp4") > 0.15:
+        attempt(0.0, float(start), length)
     cover_t = min(1.2, (end - start) / 2)
     run(["ffmpeg", "-y", "-v", "error", "-ss", f"{cover_t:.2f}", "-i", f"{name}.mp4", "-frames:v", "1",
          "-q:v", "3", f"{name}.jpg"], cwd=work)

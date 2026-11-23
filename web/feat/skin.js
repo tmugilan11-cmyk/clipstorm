@@ -2,7 +2,7 @@
  *
  * The page grew rule by rule, so buttons were 32, 38 or 44 tall depending on who wrote them, field borders were so
  * faint on the black page that a box looked like empty space, the small print was 12px, and a few hover colours
- * were still the light-page values (#D4CAC3 and #F3E7DD glare on black). This sheet puts all of that on one scale
+ * were still the light-page values (#D4CAC3 and #EAE7F7 glare on black). This sheet puts all of that on one scale
  * and changes nothing else: no new class, no markup, no motion. It styles the classes index.html already has.
  *
  * Scope: every selector is written for the main area (#main), dialogs and the sidebar (.side) only, with a
@@ -14,12 +14,12 @@
  *   --sk-edge-hi #8A8A8A  the same border on hover. 5.34:1 on --field, 5.73:1 on --bg.
  *   --sk-gap     20px     the one distance between two sections or cards (not a colour).
  * Text pairs used, all passing 4.5:1:
- *   --brand-ink #160D05 on --brand #FF8B33          8.22   (primary button; 9.12 on its hover #FF9A4C)
+ *   --brand-ink #100929 on --brand #AF9BFF          8.22   (primary button; 9.12 on its hover #B8A7FF)
  *   --bad #F87171 on --bad-soft #2B1416             6.25   (danger button)
  *   --dim #A3A3A3 on --field #141414                7.30   (labels, placeholder-grade help)
  *   --faint #A0948C on --field #141414              6.24, on --line #1E1E1E 5.64   (hints)
  *   --text #F5F5F5 on --line #1E1E1E                15.29  (disabled button label is exempt but readable)
- *   --brand #FF8B33 on --brand-soft #2A1B10         7.12   (warn pill);  --good on --good-soft 8.01;  white on #C81E28 5.72
+ *   --brand #AF9BFF on --brand-soft #20183F         7.12   (warn pill);  --good on --good-soft 8.01;  white on #C81E28 5.72
  * Switch knob: --dim on the off track, --brand-ink on the orange on-track (8.22), because white on orange is 2.34.
  *
  * Type scale (px): title 24, section 18, card 16, body 15, help 14, hint and label 13. Line height 1.55 for reading,
@@ -61,7 +61,7 @@
     ${sc(".btn:hover")} { background:var(--muted); border-color:var(--sk-edge-hi); }
     ${sc(".btn:active")} { background:var(--line); }
     ${sc(".btn.primary")} { background:var(--brand); border-color:var(--brand); color:var(--brand-ink); }
-    ${sc(".btn.primary:hover")} { background:#FF9A4C; border-color:#FF9A4C; }
+    ${sc(".btn.primary:hover")} { background:#B8A7FF; border-color:#B8A7FF; }
     ${sc(".btn.primary:active")} { background:var(--brand-press); border-color:var(--brand-press); }
     ${sc(".btn.ghost")} { background:transparent; border-color:transparent; color:var(--dim); }
     ${sc(".btn.ghost:hover")} { background:var(--muted); border-color:transparent; color:var(--text); }

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Clipstorm</title>
-<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg?v=3">
+<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg?v=4">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@300&family=Archivo+Black&family=Anton&family=Poppins:wght@800&display=swap" rel="stylesheet">
@@ -12,9 +12,9 @@
 :root{
   /* One theme: dark. Ratios below are WCAG 2.2 (L1+.05)/(L2+.05) on --bg #0A0A0A.
        --text  #F5F5F5   18.16    --dim  #A3A3A3   7.85
-       --faint #7C7C7C   4.74     --brand #FF8B33  8.48
-       --brand-deep #FFB27A   11.22   --good #34D399  10.30 (8.01 on good-soft)   --bad #F87171  7.16 */
-  --brand:#FF8B33;--brand-press:#F27A1F;--brand-ink:#160D05;--brand-soft:#2A1B10;--brand-line:#4A2E18;--brand-deep:#FFB27A;
+       --faint #7C7C7C   4.74     --brand #AF9BFF  8.48
+       --brand-deep #C8BAFF   11.22   --good #34D399  10.30 (8.01 on good-soft)   --bad #F87171  7.16 */
+  --brand:#AF9BFF;--brand-press:#A18BF8;--brand-ink:#100929;--brand-soft:#20183F;--brand-line:#362676;--brand-deep:#C8BAFF;
   --frame:#000000;--frame-2:#0F0F0F;--frame-line:rgba(255,255,255,.08);--frame-text:#F5F5F5;--frame-dim:#8A8A8A;
   --bg:#0A0A0A;--card:#111111;--field:#141414;--muted:#111111;--line:#1E1E1E;--line-2:#2A2A2A;
   --text:#F5F5F5;--ink:#F5F5F5;--dim:#A3A3A3;--faint:#7C7C7C;
@@ -53,8 +53,8 @@ svg{width:18px;height:18px;flex:none;fill:currentColor}
 .nav-item.on svg{color:var(--brand-ink)}
 .label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .count{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.1);color:var(--text);white-space:nowrap}
-.nav-item.on .count{background:rgba(42,26,18,.14);color:var(--brand-ink)}
-.avatar{width:26px;height:26px;border-radius:50%;background:rgba(255,139,51,.18);color:#FFB27A;display:grid;place-items:center;font-size:11px;font-weight:700;flex:none;overflow:hidden}
+.nav-item.on .count{background:rgba(31,25,57,.14);color:var(--brand-ink)}
+.avatar{width:26px;height:26px;border-radius:50%;background:rgba(175,155,255,.18);color:#C8BAFF;display:grid;place-items:center;font-size:11px;font-weight:700;flex:none;overflow:hidden}
 img.avatar{object-fit:cover;background:rgba(255,255,255,.08)}
 .tav{width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none;background:var(--muted)}
 #title{display:flex;align-items:center;gap:10px}
@@ -84,7 +84,7 @@ main{background:var(--bg);margin:8px 8px 8px 0;border-radius:var(--r-lg);height:
 .upd .cmd{display:flex;gap:8px;align-items:center}
 .upd .cmd code{flex:1;min-width:0;overflow-wrap:anywhere;font-size:12px;background:var(--muted);border-radius:8px;padding:9px 11px}
 .upd h3{font-size:13px;font-weight:600;color:var(--text);margin:0}
-.vb{display:flex;align-items:center;gap:12px;margin:12px 28px 0;padding:12px 12px 12px 16px;border-radius:12px;background:#2A1B10;color:#FFD9BC;font-size:14px;animation:rise .3s ease both}
+.vb{display:flex;align-items:center;gap:12px;margin:12px 28px 0;padding:12px 12px 12px 16px;border-radius:12px;background:#20183F;color:#E3DCFF;font-size:14px;animation:rise .3s ease both}
 .vb svg{width:18px;height:18px;flex:none;color:var(--brand-deep)}
 .vb span{flex:1;min-width:0}
 .vb b{color:var(--brand-deep)}
@@ -141,7 +141,7 @@ main{background:var(--bg);margin:8px 8px 8px 0;border-radius:var(--r-lg);height:
 .splat{display:flex;gap:4px;margin-left:auto}
 .splat button{display:grid;place-items:center;width:30px;height:30px;border:0;border-radius:8px;background:rgba(255,255,255,.06);color:#B9A597;cursor:pointer;transition:background-color .15s ease}
 .splat button:hover{background:rgba(255,255,255,.12)}
-.splat button.on{background:rgba(255,139,51,.22)}
+.splat button.on{background:rgba(175,155,255,.22)}
 .splat svg{width:15px;height:15px}
 @media (max-width:960px){.stream{grid-template-columns:1fr}}
 .sbadge{display:inline-flex;align-items:center;gap:6px;margin-top:3px;font-size:11px;font-weight:600;padding:2px 8px 2px 7px;border-radius:999px;background:var(--muted);color:var(--dim)}
@@ -285,7 +285,7 @@ label.ck input{accent-color:var(--brand);margin:0}
 .hero h2{font-size:clamp(21px,5.2vw,28px);font-weight:700;letter-spacing:-.03em;color:var(--text);line-height:1.2;text-wrap:balance}
 .hero>p{color:var(--dim);margin:8px auto 22px;max-width:520px;font-size:15px}
 .composer{max-width:760px;margin:0 auto;background:var(--bg);border:1px solid var(--line-2);border-radius:var(--r-lg);text-align:left;transition:background-color .15s ease,border-color .15s ease}
-.composer:has(#url:focus){border-color:#FFB27A}
+.composer:has(#url:focus){border-color:#C8BAFF}
 .composer.compact{max-width:none;margin-bottom:28px;background:var(--muted)}
 .composer.over{background:var(--brand-soft);border-color:var(--brand)}
 .composer :focus-visible{outline:none}
@@ -315,9 +315,9 @@ label.ck input{accent-color:var(--brand);margin:0}
 .att-in{display:flex;flex-direction:column;gap:8px;padding:0 12px 8px}
 .lp{display:flex;align-items:center;gap:12px;padding:8px;border-radius:12px;background:var(--muted);animation:rise .28s ease both}
 .composer.compact .lp{background:var(--muted)}
-.lp .th{position:relative;flex:none;width:112px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#2A1A12}
+.lp .th{position:relative;flex:none;width:112px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#1F1939}
 .lp .th img{width:100%;height:100%;object-fit:cover;display:block}
-.lp .th .du{position:absolute;right:5px;bottom:5px;background:rgba(20,12,8,.82);color:#fff;font-size:11px;font-weight:600;padding:1px 6px;border-radius:6px}
+.lp .th .du{position:absolute;right:5px;bottom:5px;background:rgba(15,11,28,.82);color:#fff;font-size:11px;font-weight:600;padding:1px 6px;border-radius:6px}
 .lp .tx{min-width:0;flex:1}
 .lp .tx b{display:block;font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lp .tx span{display:block;font-size:12px;color:var(--faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -345,30 +345,30 @@ label.ck input{accent-color:var(--brand);margin:0}
 .addrow svg{width:16px;height:16px}
 .addrow span{margin-left:auto;font-weight:500;color:var(--faint);font-size:12px}
 @media (max-width:560px){.lp .th{width:88px}.lp .ok{display:none}}
-.btn.primary:disabled{background:#F3E7DD;color:#B9A597;cursor:not-allowed}
+.btn.primary:disabled{background:#EAE7F7;color:#B9A597;cursor:not-allowed}
 @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
 @keyframes spin{to{transform:rotate(360deg)}}
-.working{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--brand);background:rgba(255,139,51,.14);padding:2px 8px 2px 6px;border-radius:999px}
+.working{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--brand);background:rgba(175,155,255,.14);padding:2px 8px 2px 6px;border-radius:999px}
 .working i{width:10px;height:10px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:spin .8s linear infinite}
-.nav-item.on .working{background:rgba(42,26,18,.14);color:var(--brand-ink)}
+.nav-item.on .working{background:rgba(31,25,57,.14);color:var(--brand-ink)}
 .app.mini .nav-item .working{display:none}
 
 /* custom dropdown: a dark panel, no border or shadow needed against the white */
 .pick{position:relative}
 .pick .car{width:13px;height:13px;transition:transform .15s ease}
 .pick.open .car{transform:rotate(180deg)}
-.pick-menu{position:absolute;top:calc(100% + 6px);left:0;z-index:30;min-width:230px;max-height:280px;overflow:auto;background:#2A1A12;border-radius:12px;padding:6px;
+.pick-menu{position:absolute;top:calc(100% + 6px);left:0;z-index:30;min-width:230px;max-height:280px;overflow:auto;background:#1F1939;border-radius:12px;padding:6px;
   opacity:0;visibility:hidden;transform:translateY(-6px);pointer-events:none;transition:opacity .18s ease,transform .18s ease,visibility .18s}
 .pick.open .pick-menu{opacity:1;visibility:visible;transform:none;pointer-events:auto}
 .pick-opt{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:0;background:transparent;color:#E9DED6;border-radius:8px;font-size:13px;font-weight:500;text-align:left;cursor:pointer;transition:background-color .15s ease,color .15s ease}
 .pick-opt:hover,.pick-opt:focus-visible{background:rgba(255,255,255,.08);color:#fff}
-.pick-new{display:flex;align-items:center;gap:10px;width:100%;margin-top:4px;padding:8px 10px;border:0;border-top:1px solid rgba(255,255,255,.08);border-radius:0 0 8px 8px;background:transparent;color:#FFB27A;font-size:13px;font-weight:600;text-align:left;cursor:pointer;transition:background-color .15s ease,color .15s ease}
-.pick-new:hover,.pick-new:focus-visible{background:rgba(255,139,51,.14);color:#FFC79D}
-.pick-new .av{background:rgba(255,139,51,.18)}
+.pick-new{display:flex;align-items:center;gap:10px;width:100%;margin-top:4px;padding:8px 10px;border:0;border-top:1px solid rgba(255,255,255,.08);border-radius:0 0 8px 8px;background:transparent;color:#C8BAFF;font-size:13px;font-weight:600;text-align:left;cursor:pointer;transition:background-color .15s ease,color .15s ease}
+.pick-new:hover,.pick-new:focus-visible{background:rgba(175,155,255,.14);color:#D6CCFF}
+.pick-new .av{background:rgba(175,155,255,.18)}
 .pick-empty{margin:6px 10px 4px;font-size:12px;line-height:1.45;color:#B9A597}
 img.av{object-fit:cover}
-.pick-opt .av,.pick-new .av{flex:none;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:11px;font-weight:700;background:rgba(255,139,51,.18);color:#FFB27A}
+.pick-opt .av,.pick-new .av{flex:none;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:11px;font-weight:700;background:rgba(175,155,255,.18);color:#C8BAFF}
 .pick-new .av svg,.pick-opt .av svg{width:14px;height:14px}
 .pick-opt .tick{margin-left:auto;width:15px;height:15px;color:var(--brand);visibility:hidden}
 .pick-opt[aria-selected=true] .tick{visibility:visible}
@@ -404,8 +404,8 @@ img.av{object-fit:cover}
 .cap-prev b{font-weight:inherit}
 .lay-prev{height:54px;border-radius:7px;background:#1E1612;display:grid;place-items:center}
 .lay-prev .ph{position:relative;width:28px;height:48px;border-radius:4px;overflow:hidden;background:#4A3428}
-.lay-prev .ph::before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,#B4643A,#5E3A2A);filter:blur(3px);opacity:.75}
-.lay-prev .ph i{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:16px;background:linear-gradient(135deg,#FF8B33,#FFB27A)}
+.lay-prev .ph::before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,#7E6ACF,#46387D);filter:blur(3px);opacity:.75}
+.lay-prev .ph i{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:16px;background:linear-gradient(135deg,#AF9BFF,#C8BAFF)}
 .lay-prev.zoom .ph i{left:-6px;right:-6px;height:24px}
 .lay-prev.crop .ph i{left:0;right:0;top:0;height:100%;transform:none}
 .seg{display:flex;gap:4px;background:var(--bg);border-radius:10px;padding:4px}
@@ -537,7 +537,7 @@ img.av{object-fit:cover}
 button.tile{font:inherit;text-align:left;cursor:pointer;color:inherit;transition:background-color .15s ease,border-color .15s ease}
 button.tile:hover,button.tile:focus-visible{background:var(--brand-soft);border-color:var(--brand-line)}
 .tile em{font-style:normal;font-size:12px;color:var(--faint);margin-top:6px}
-.savebar{position:sticky;bottom:16px;z-index:4;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 16px;margin-top:8px;border-radius:14px;background:var(--brand-ink);color:#F4ECE6;opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .2s ease,transform .2s ease}
+.savebar{position:sticky;bottom:16px;z-index:4;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 16px;margin-top:8px;border-radius:14px;background:var(--brand-ink);color:#EEECF7;opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .2s ease,transform .2s ease}
 .savebar.on{opacity:1;transform:none;pointer-events:auto}
 .savebar>span{flex:1;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500}
 .savebar>span svg{width:16px;height:16px;color:var(--brand)}
@@ -556,7 +556,7 @@ button.tile:hover,button.tile:focus-visible{background:var(--brand-soft);border-
 .jthumb{position:relative;flex:none;width:128px;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:var(--muted);display:grid;place-items:center;color:var(--faint)}
 .jthumb img{width:100%;height:100%;object-fit:cover;display:block}
 .jthumb>svg{width:22px;height:22px}
-.jthumb .du{position:absolute;right:5px;bottom:5px;background:rgba(20,12,8,.82);color:#fff;font-size:11px;font-weight:600;padding:1px 6px;border-radius:6px}
+.jthumb .du{position:absolute;right:5px;bottom:5px;background:rgba(15,11,28,.82);color:#fff;font-size:11px;font-weight:600;padding:1px 6px;border-radius:6px}
 @media (max-width:560px){.jthumb{width:92px}}
 .job-head h3{font-size:15px;font-weight:600;overflow-wrap:anywhere;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .bar{height:6px;background:var(--muted);border-radius:999px;overflow:hidden;margin:6px 0}
@@ -592,13 +592,13 @@ button.tile:hover,button.tile:focus-visible{background:var(--brand-soft);border-
 .selck input{width:16px;height:16px;accent-color:var(--brand);cursor:pointer;margin:0}
 .clip.picked{border-color:var(--brand)}
 #selbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:none;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;
-  max-width:calc(100vw - 24px);padding:10px 12px 10px 18px;border-radius:14px;background:#1F140D;color:#FFF4EA;font-size:14px;border:1px solid rgba(255,178,122,.25)}
+  max-width:calc(100vw - 24px);padding:10px 12px 10px 18px;border-radius:14px;background:#18122C;color:#FFF4EA;font-size:14px;border:1px solid rgba(200,186,255,.25)}
 #selbar.on{display:flex}
 #selbar b{font-weight:700;margin-right:6px}
 #selbar .btn{background:transparent;color:#FFF4EA;border-color:rgba(255,244,234,.25)}
 #selbar .btn:hover{background:rgba(255,244,234,.1)}
-#selbar .btn.primary{background:var(--brand);color:#1F140D;border-color:var(--brand)}
-#selbar .btn.primary:hover{background:#FFA25C}
+#selbar .btn.primary{background:var(--brand);color:#18122C;border-color:var(--brand)}
+#selbar .btn.primary:hover{background:#BDADFF}
 #selbar .btn.danger{color:#FF9A8F;border-color:rgba(255,154,143,.45)}
 #selbar .btn.danger:hover{background:rgba(255,154,143,.14)}
 .danger-card{border-color:#F3C9C4}
@@ -770,7 +770,7 @@ dialog.wide{width:min(1560px,calc(100vw - 32px));max-width:min(1560px,calc(100vw
 .ntoast.out{animation:ntout .25s ease forwards}
 .ntoast i{flex:none;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand-deep)}
 .ntoast i svg{width:17px;height:17px}
-.ntoast.k-expiry i{background:#2A1B10;color:#FFD9BC}.ntoast.k-post i{background:#2B1416;color:#F87171}.ntoast.k-live i{background:#2B1416;color:#F87171}.ntoast.k-clips i{background:#0B2A1E;color:#34D399}
+.ntoast.k-expiry i{background:#20183F;color:#E3DCFF}.ntoast.k-post i{background:#2B1416;color:#F87171}.ntoast.k-live i{background:#2B1416;color:#F87171}.ntoast.k-clips i{background:#0B2A1E;color:#34D399}
 .ntoast .tx{flex:1;min-width:0}
 .ntoast b{display:block;font-size:13px;font-weight:600;color:var(--text);line-height:1.35}
 .ntoast span{display:block;font-size:12px;color:var(--dim);margin-top:2px;overflow-wrap:anywhere}
@@ -800,7 +800,7 @@ dialog.wide{width:min(1560px,calc(100vw - 32px));max-width:min(1560px,calc(100vw
 .nt:hover{background:var(--muted)}
 .nt i{flex:none;width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand-deep)}
 .nt i svg{width:16px;height:16px}
-.nt.k-expiry i{background:#2A1B10;color:#FFD9BC}.nt.k-post i,.nt.k-fail i{background:#2B1416;color:#F87171}.nt.k-live i{background:#2B1416;color:#F87171}.nt.k-clips i{background:#0B2A1E;color:#34D399}
+.nt.k-expiry i{background:#20183F;color:#E3DCFF}.nt.k-post i,.nt.k-fail i{background:#2B1416;color:#F87171}.nt.k-live i{background:#2B1416;color:#F87171}.nt.k-clips i{background:#0B2A1E;color:#34D399}
 .nt .tx{flex:1;min-width:0}
 .nt b{display:block;font-size:13px;font-weight:600;color:var(--text);line-height:1.35}
 .nt span{display:block;font-size:12px;color:var(--dim);margin-top:2px;overflow-wrap:anywhere}
@@ -822,7 +822,7 @@ dialog.wide{width:min(1560px,calc(100vw - 32px));max-width:min(1560px,calc(100vw
 
 /* ---------- AI status and usage */
 .ai-card{display:flex;align-items:center;gap:10px;width:100%;margin-top:6px;padding:8px;border-radius:8px;background:var(--frame-2);border:1px solid transparent;color:var(--frame-text);cursor:pointer;text-align:left}
-.ai-card .ai-ic{flex:none;width:30px;height:30px;border-radius:7px;display:grid;place-items:center;background:rgba(255,139,51,.16);color:var(--brand)}
+.ai-card .ai-ic{flex:none;width:30px;height:30px;border-radius:7px;display:grid;place-items:center;background:rgba(175,155,255,.16);color:var(--brand)}
 .ai-card .ai-ic svg{width:18px;height:18px}
 .ai-card .ai-tx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
 .ai-card small{font-size:12px;color:var(--frame-dim);font-weight:500}
@@ -863,13 +863,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 /* ---------- motion and hover: colour only, never size */
 .btn,.nav-item,.chip,.step,.tabbtn,.icon-btn,label.ck,.clip,a.lnk,.ai-card,.veil span,td,label.sw input{transition:background-color .15s ease,border-color .15s ease,color .15s ease}
 .btn:hover{background:var(--muted);border-color:#D4CAC3}
-.btn.primary:hover{background:#FF9A4C;border-color:#FF9A4C}
+.btn.primary:hover{background:#B8A7FF;border-color:#B8A7FF}
 .btn.dark:hover{background:#3A2C25;border-color:#3A2C25}
 .btn.danger:hover{background:#3A1A1E}
 .btn.ghost:hover{background:var(--muted);border-color:transparent;color:var(--text)}
 
 .nav-item:hover{background:var(--frame-2)}
-.nav-item.on:hover{background:#FF9A4C}
+.nav-item.on:hover{background:#B8A7FF}
 .icon-btn:hover{background:var(--muted);color:var(--text)}
 .side .icon-btn:hover{background:var(--frame-2);color:var(--frame-text)}
 .chip:hover{background:var(--muted);color:var(--text)}
@@ -878,11 +878,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .tabbtn:hover{color:var(--text);background:var(--muted)}
 label.ck:hover{border-color:#D4CAC3}
 .clip:hover{border-color:var(--line-2)}
-.shot:hover .veil span{background:#FF9A4C}
+.shot:hover .veil span{background:#B8A7FF}
 a.lnk:hover{color:var(--brand-deep)}
 tr:hover>td{background:var(--muted)}
 .ai-card:hover{background:#352a24}
-.ai-card.on{border-color:rgba(255,139,51,.5)}
+.ai-card.on{border-color:rgba(175,155,255,.5)}
 .app.mini .ai-card:hover{background:var(--frame-2)}
 dialog[open]{animation:fadein .16s ease}
 @keyframes fadein{from{opacity:0}}
@@ -975,7 +975,7 @@ dialog[open]{animation:fadein .16s ease}
 <body>
 <div class="app" id="app">
   <aside class="side" aria-label="Sidebar">
-    <div class="side-head"><img class="logo" src="/brand/logo-light.svg?v=3" alt="Clipstorm"><img class="mark" src="/brand/favicon.svg?v=3" alt="Clipstorm">
+    <div class="side-head"><img class="logo" src="/brand/logo-light.svg?v=4" alt="Clipstorm"><img class="mark" src="/brand/favicon.svg?v=4" alt="Clipstorm">
       <button class="icon-btn collapse" data-act="collapse" id="collapseBtn" aria-label="Collapse sidebar"></button></div>
     <nav class="nav" id="nav" aria-label="Main"></nav>
     <div class="side-foot" id="foot"></div>
@@ -1294,7 +1294,7 @@ function statusBadge(c) {
 }
 const cav = c => { const r = c.live_job || liveOn(c).length ? " ring" : "";
   return c.profile?.pic && c.profile.channel === c.channel ? `<img class="avatar${r}" src="${avatarUrl(c)}" alt="">` : `<span class="avatar${r}">${esc((c.name || "?")[0].toUpperCase())}</span>`; };
-const GRADS = [["#FF8B33", "#FFB27A"], ["#7C5CFF", "#B9A7FF"], ["#0EA5E9", "#7DD3FC"], ["#10B981", "#6EE7B7"],
+const GRADS = [["#AF9BFF", "#C8BAFF"], ["#7C5CFF", "#B9A7FF"], ["#0EA5E9", "#7DD3FC"], ["#10B981", "#6EE7B7"],
                ["#F43F5E", "#FDA4AF"], ["#F59E0B", "#FDE68A"], ["#EC4899", "#F9A8D4"], ["#14B8A6", "#99F6E4"]];
 function meAvatar(u) {
   if (u.photo) return `<img class="avatar me-pic" src="/api/me/photo?v=${u.photo}" alt="">`;
@@ -1560,7 +1560,7 @@ function go(v, tab, fromHistory) {
   else if (window.PeakCut && PeakCut.hasPage && PeakCut.hasPage(v)) { PeakCut.drawPage(v); }
   else view.innerHTML = `<div id="stream"></div><div id="cbody"></div>`;   // the live player stays put across tabs: no restart, no rebuffer
   if ($("#add")) drawAdd(v === "overview" ? "hero" : "compact");
-  if (v === "overview" && window.GradientASCII) { try { window._gaStop = GradientASCII($("#appAscii"), {colors: ["#ffb27a", "#ffffff", "#ffd2ae", "#ffe0c2", "#fff1e6"], shape: "horizon", lightMode: true, cellSize: 16, density: 0.8, glyphOpacity: 0.26, gradientOpacity: 0.32, glow: 0.06, grain: 0.06, mouseInteraction: false, clickEffect: "none"}); } catch {} }
+  if (v === "overview" && window.GradientASCII) { try { window._gaStop = GradientASCII($("#appAscii"), {colors: ["#c8baff", "#ffffff", "#ded5ff", "#e7e2ff", "#fff1e6"], shape: "horizon", lightMode: true, cellSize: 16, density: 0.8, glyphOpacity: 0.26, gradientOpacity: 0.32, glow: 0.06, grain: 0.06, mouseInteraction: false, clickEffect: "none"}); } catch {} }
   if (v === "settings") drawSettings();
   if (v.startsWith("c:")) setTab(S.ctab);
   $("#main").scrollTo(0, 0); render();
@@ -1613,7 +1613,7 @@ const LAYOUT_SHORT = {blur:"Blurred fill", zoom:"Zoomed in", crop:"Fill screen",
   stack:"Streamer top, game below"};
 const CAP_LOOK = {bounce:{font:"'Archivo Black'", hl:"#FFFF00", up:true}, hype:{font:"Anton", hl:"#FF3C3C", up:true}, clean:{font:"Poppins", hl:"#6BD7FF", up:false, w:800}};
 function capPrev(k) {
-  const s = CAP_LOOK[k] || {font:"inherit", hl:"#FF8B33", up:true};
+  const s = CAP_LOOK[k] || {font:"inherit", hl:"#AF9BFF", up:true};
   const t = s.up ? ["CLIP", "THIS"] : ["Clip", "this"];
   return `<span class="cap-prev" style="font-family:${s.font},sans-serif;font-weight:${s.w || 400}">${t[0]}&nbsp;<b style="color:${s.hl}">${t[1]}</b></span>`;
 }
@@ -1948,6 +1948,12 @@ function postPills(c) {
     return p.url ? `<a class="pill ${cls}" href="${esc(p.url)}" target="_blank" rel="noopener">${txt}</a>` : `<span class="pill ${cls}" title="${esc(p.error || "")}">${txt}</span>`;
   }).join("");
 }
+/* Clips are always listed best first: the highest score at the top, the lowest at the bottom. A clip with no score
+   (picked by hand) goes after the scored ones; ties keep the newest first. */
+function byScore(list) {
+  return [...(list || [])].sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.made_at) || 0) - (Number(a.made_at) || 0));
+}
+window.PeakCut = window.PeakCut || {}; window.PeakCut.byScore = byScore;
 function clipHtml(j, c) {
   const m = `/media/${j.id}/`, a = `data-j="${j.id}" data-c="${esc(c.id)}"`;
   const body = c.status === "done" ? `<img src="${m}${esc(c.cover)}?v=${c.version}" alt="" loading="lazy"><span class="veil"><span>${ic("play")}</span></span>`
@@ -1997,7 +2003,7 @@ function liveHtml(j) {
       <div class="meter"><h4>Latest AI decisions</h4><div class="said" style="justify-content:flex-start;color:var(--text)">${(L.verdicts || []).length ? L.verdicts.slice(0, 4).map(v => `<div>${fmt(v.t)} · ${v.transcript != null ? "best score " + v.transcript : ""}${v.reaction != null ? " · reaction " + Math.round(v.reaction / 10) + "/10" : ""} · <span class="sub">${esc(v.result)}</span></div>`).join("") : "<div class='sub'>First check soon…</div>"}</div></div>
       <div class="meter"><h4>What was just said</h4><div class="said">${L.lines.length ? L.lines.map(t => `<div>${esc(t)}</div>`).join("") : "<div>Listening…</div>"}</div></div>
     </div>${j.error ? `<div class="err">${esc(j.error)}</div>` : ""}</div>
-    ${j.clips.length ? `<div class="grid" style="margin-bottom:28px">${[...j.clips].reverse().map(c => clipHtml(j, c)).join("")}</div>` : ""}`;
+    ${j.clips.length ? `<div class="grid" style="margin-bottom:28px">${byScore(j.clips).map(c => clipHtml(j, c)).join("")}</div>` : ""}`;
 }
 function jobHtml(j) {
   if (j.status === "live") return liveHtml(j);
@@ -2025,7 +2031,7 @@ function jobHtml(j) {
     ${busy ? `<div class="job-prog"><p class="jp-stage"><b>${esc(j.stage || (j.status === "queued" ? "Waiting its turn" : "Working"))}</b><span>${pct}%</span></p><div class="bar"><i style="width:${pct}%"></i></div>${heard ? `<p class="sub">${esc(heard.replace(/^ · /, ""))}</p>` : ""}</div>` : ""}
     ${j.status === "done" && !j.clips.length ? `<p class="sub">${esc(j.stage)}</p>` : ""}
     ${j.error ? `<div class="err">${esc(j.error)}<button class="rep" data-act="report" data-ctx="${esc("Video failed: " + (j.title || j.source.name || "") + " | " + j.error)}">Report this</button></div>` : ""}${j.ai?.note ? `<p class="sub">${esc(j.ai.note)}</p>` : ""}
-    ${j.clips.length ? `<div class="grid">${j.clips.map(c => clipHtml(j, c)).join("")}</div>` : ""}`;
+    ${j.clips.length ? `<div class="grid">${byScore(j.clips).map(c => clipHtml(j, c)).join("")}</div>` : ""}`;
 }
 /* ---- selecting several videos and clips: delete or download them together */
 const sel = () => (S.sel = S.sel || new Set());
@@ -2083,7 +2089,7 @@ function drawJobs() {
     list = list.filter(j => j.status !== "live"); }
   if (!list.length) {
     root.querySelectorAll("section").forEach(e => e.remove());
-    if (!$(".empty", root)) root.innerHTML = `<div class="empty"><img src="/brand/favicon.svg?v=3" alt=""><b>${cid ? "No clips for this creator yet" : "No videos yet"}</b>${cid ? "Start recording their stream, or paste a link to one of their videos above." : "Paste a link above and Clipstorm will find the best moments and turn them into clips. Not sure how? Go to Home for the three steps."}</div>`;
+    if (!$(".empty", root)) root.innerHTML = `<div class="empty"><img src="/brand/favicon.svg?v=4" alt=""><b>${cid ? "No clips for this creator yet" : "No videos yet"}</b>${cid ? "Start recording their stream, or paste a link to one of their videos above." : "Paste a link above and Clipstorm will find the best moments and turn them into clips. Not sure how? Go to Home for the three steps."}</div>`;
     return;
   }
   $(".empty", root)?.remove();
@@ -2177,7 +2183,7 @@ async function saveCreator(quiet) {
 function drawLog() {
   const c = creator();
   put($("#clog"), c && c.log.length ? `<div class="card"><div class="log">${c.log.map(l => `<div><time>${when(l.t)}</time><span>${esc(l.msg)}</span></div>`).join("")}</div></div>`
-    : `<div class="empty"><img src="/brand/favicon.svg?v=3" alt=""><b>Nothing has happened yet</b>Recordings, clips and posts for this creator will be listed here.</div>`);
+    : `<div class="empty"><img src="/brand/favicon.svg?v=4" alt=""><b>Nothing has happened yet</b>Recordings, clips and posts for this creator will be listed here.</div>`);
 }
 
 /* ============================================================ overview */
@@ -2248,7 +2254,7 @@ function drawOverview() {
     <div class="card"><div class="card-head"><div><h2>Creators</h2><p class="sub">Each creator's status and results</p></div></div>
       ${o.creators.length ? `<div class="scroll"><table><tr><th>Creator</th><th>Status</th><th>Auto-post</th><th class="num">Clips today</th><th class="num">Posted today</th><th class="num">Waiting</th><th class="num">Failed</th><th class="num">Views</th><th class="num">Est. earnings</th></tr>
       ${o.creators.map(r => `<tr><td><a class="lnk" href="#" data-act="go" data-v="c:${esc(r.id)}">${esc(r.name)}</a></td><td>${state(r)}</td><td>${r.autopost ? `<span class="pill ok">On</span>` : `<span class="pill">Off</span>`}</td><td class="num">${r.clips_today} <span class="sub">/ ${r.clips_total}</span></td><td class="num">${r.posted_today} <span class="sub">/ ${r.posted_total}</span></td><td class="num">${r.queued}</td><td class="num">${r.failed}</td><td class="num">${r.views.toLocaleString()}</td><td class="num">${r.earnings.toFixed(2)}</td></tr>`).join("")}</table></div>`
-      : `<div class="empty"><img src="/brand/favicon.svg?v=3" alt=""><b>No creators yet</b>Add one to give each streamer their own workspace.</div>`}</div>
+      : `<div class="empty"><img src="/brand/favicon.svg?v=4" alt=""><b>No creators yet</b>Add one to give each streamer their own workspace.</div>`}</div>
     <div class="card"><div class="card-head"><div><h2>Post queue</h2><p class="sub">${o.paused ? "Paused. Recording and clipping carry on; nothing is posted." : "Queued clips go out at their scheduled time."}</p></div>
         <button class="btn ${o.paused ? "primary" : ""}" data-act="pause">${ic(o.paused ? "play" : "pause")}${o.paused ? "Resume posting" : "Pause all posting"}</button></div>
       ${o.posts.length ? `<div class="scroll"><table class="stack"><tr><th>When</th><th>Clip</th><th>Creator</th><th>Account</th><th class="num">Views</th><th></th></tr>
@@ -2259,7 +2265,7 @@ function drawOverview() {
 
 /* ============================================================ review queue */
 function rvList() {
-  return Array.isArray(S.rv) ? S.rv : (S.rv && S.rv.clips) || [];
+  return byScore(Array.isArray(S.rv) ? S.rv : (S.rv && S.rv.clips) || []);
 }
 const rvUndecided = c => c.review !== "approved" && c.review !== "rejected";
 const rvCursor = () => rvList().find(rvUndecided) || null;
@@ -2310,13 +2316,13 @@ function drawReview() {
     <label class="rv-job">Video <select id="rv_job">${pickable.map(j => `<option value="${esc(j.id)}"${j.id === S.rvJid ? " selected" : ""}>${esc(j.title || j.id)}</option>`).join("")}</select></label></section>` : "";
   if (!S.rv) return put(root, `<div class="set-load">Loading clips…</div>`);
   if (S.rv.error) return put(root, picker + `<div class="empty"><b>Could not load clips</b>Check that the server is running, then try again.<div style="margin-top:10px"><button class="btn" data-act="rvreload">Try again</button></div></div>`);
-  if (S.rv.none) return put(root, `<div class="empty"><img src="/brand/favicon.svg?v=3" alt=""><b>Nothing to review yet</b>Once a video has finished clips, they show up here for a quick yes or no before anything goes out.<div style="margin-top:10px"><button class="btn primary" data-act="go" data-v="overview">Go to Home</button></div></div>`);
+  if (S.rv.none) return put(root, `<div class="empty"><img src="/brand/favicon.svg?v=4" alt=""><b>Nothing to review yet</b>Once a video has finished clips, they show up here for a quick yes or no before anything goes out.<div style="margin-top:10px"><button class="btn primary" data-act="go" data-v="overview">Go to Home</button></div></div>`);
   const list = rvList(), n = list.length, done = list.filter(c => !rvUndecided(c)).length;
   const body = n ? `<section class="set-sec"><h2>Clips <span class="pill${done === n ? " ok" : ""}" style="margin-left:10px">${done} of ${n} decided</span></h2>
       <p class="help">Enter or A approves the next clip, Backspace or X rejects, Right or S skips ahead. Decided clips stay in place so you can change your mind.</p>
       <div class="rv-list">${list.map(rvCard).join("")}</div>
       <p class="help"><b>Post approved:</b> approved clips wait in <a href="#" data-act="go" data-v="library">My videos</a> until you post them there.</p></section>`
-    : `<div class="empty"><img src="/brand/favicon.svg?v=3" alt=""><b>Every clip in this video is decided</b>Approved ones wait in <a href="#" data-act="go" data-v="library">My videos</a> until you post them.<div style="margin-top:10px"><button class="btn primary" data-act="go" data-v="library">Open My videos</button></div></div>`;
+    : `<div class="empty"><img src="/brand/favicon.svg?v=4" alt=""><b>Every clip in this video is decided</b>Approved ones wait in <a href="#" data-act="go" data-v="library">My videos</a> until you post them.<div style="margin-top:10px"><button class="btn primary" data-act="go" data-v="library">Open My videos</button></div></div>`;
   put(root, picker + body);
 }
 async function rvReview(jid, cid, review) {

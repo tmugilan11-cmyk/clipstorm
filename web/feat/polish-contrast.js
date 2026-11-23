@@ -12,7 +12,7 @@
  *   --faint #7C7C7C  on --bg #0A0A0A    4.74   the second quiet level, passes 4.5 but barely
  *   --faint #A0948C  on --bg #0A0A0A    6.70   the old light-page value, a warm grey that now reads well
  *   --faint #75695F  on --bg #0A0A0A    3.72   what the previous version of this sheet forced: fails
- *   --faint #A0948C  on --muted #111111 6.39   on --brand-soft #2A1B10  5.63
+ *   --faint #A0948C  on --muted #111111 6.39   on --brand-soft #20183F  5.63
  *
  * The unread count on the bell sits in `web/index.html` (.bell .dotn, white on the dark red #C81E28 at 5.72:1,
  * index.html:715), not overridden from here: a colour written in two places drifts.

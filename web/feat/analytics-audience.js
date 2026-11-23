@@ -7,7 +7,7 @@
   if (!P || typeof P.add !== "function") return;
 
   const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const STEP = ["#FFE6D3", "#FFBE8C", "#FF9448", "#D9691A"];
+  const STEP = ["#ECE8FF", "#D0C4FF", "#B5A2FF", "#8E76EF"];
   const RV = ["returning", "returning_viewers", "returningViewers", "returning_views"];
   const NV = ["new", "new_viewers", "newViewers", "new_views", "first_time", "first_time_viewers"];
   const APPS = "/app/apps";   // the Connected apps page, where a channel is connected

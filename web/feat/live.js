@@ -424,7 +424,7 @@
     const facts = [];
     if (on && Number.isFinite(behind)) facts.push(`Behind live: <b>${esc(gap(behind))}</b>`);
     if (lv.words !== null && lv.words !== undefined && Number.isFinite(Number(lv.words))) facts.push(`Words heard: <b>${esc(Number(lv.words).toLocaleString())}</b>`);
-    const clips = Array.isArray(j.clips) ? j.clips.slice().sort((a, b) => (Number(b.start) || 0) - (Number(a.start) || 0)) : [];
+    const clips = Array.isArray(j.clips) ? j.clips.slice().sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.start) || 0) - (Number(a.start) || 0)) : [];
     facts.push(`Clips made: <b>${clips.length}</b>`);
     const lines = Array.isArray(lv.lines) ? lv.lines.slice(-3).reverse() : [];
     const verdicts = Array.isArray(lv.verdicts) ? lv.verdicts.slice(0, 3) : [];
@@ -440,7 +440,7 @@
       ${lines.length ? `<p class="pcrec-sub">What was just said</p><ul class="pcrec-lines">${lines.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>` : ""}
       ${verdicts.length ? `<p class="pcrec-sub">What the AI decided</p><ul class="pcrec-why">${verdicts.map(verdictLine).join("")}</ul>` : ""}
       ${err}
-      ${clips.length ? `<p class="pcrec-sub">Clips from this recording, newest first</p><div class="pcrec-clips">${clips.map((c) => clipCard(j, c)).join("")}</div>` : ""}
+      ${clips.length ? `<p class="pcrec-sub">Clips from this recording, best first</p><div class="pcrec-clips">${clips.map((c) => clipCard(j, c)).join("")}</div>` : ""}
     </section>`;
   }
 

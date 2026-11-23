@@ -19,8 +19,8 @@
     .pcgrid .plot{height:104px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px}
     .pcgrid .bar{width:100%;max-width:24px;min-height:2px;margin:0;border:0;border-radius:4px 4px 2px 2px;background:var(--brand);transition:height .3s ease}
     /* The zero-day floor: measured #6B6B6B = 3.54:1 on the #111111 day panel and 3.12:1 on the
-     * #2A1B10 today panel, above the 3:1 non-text minimum, and clearly quieter than a filled bar
-     * (#FF8B33 = 8.09:1). var(--line-2) #2A2A2A measured 1.32:1 there, invisible. */
+     * #20183F today panel, above the 3:1 non-text minimum, and clearly quieter than a filled bar
+     * (#AF9BFF = 8.09:1). var(--line-2) #2A2A2A measured 1.32:1 there, invisible. */
     .pcgrid .bar.zero{background:#6B6B6B}
     .pcgrid .num{display:grid;gap:1px;text-align:center;line-height:1.3}
     .pcgrid .num b{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}

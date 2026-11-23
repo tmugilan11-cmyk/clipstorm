@@ -16,10 +16,10 @@
  * so those controls are already usable. What they lack is consistency with a button, and
  * that is what this file adds for everything the shell did not cover.
  *
- * The colour is --brand-deep (#A9480A) rather than --brand (#FF8B33). --brand on white
+ * The colour is --brand-deep (#6541F4) rather than --brand (#AF9BFF). --brand on white
  * measures 2.34:1, under the 3:1 WCAG 1.4.11 asks of a focus indicator. --brand-deep
  * measures 5.80:1 on white and 5.55:1 on the card, and the dark theme already re-points
- * it to #FFB27A, which measures 10.47:1 on the dark ground, so one declaration covers both
+ * it to #C8BAFF, which measures 10.47:1 on the dark ground, so one declaration covers both
  * themes. The 2px width and 2px offset match the ring the shell already draws on buttons,
  * so a button and a link now look focused in the same way.
  *
@@ -59,10 +59,10 @@
     }
 
     /* A control that sits on a coloured ground needs the ring to survive it. On the
-       dark theme --brand-line is #4A2E18, a dark brown that measures 1.70:1 on the
+       dark theme --brand-line is #362676, a dark brown that measures 1.70:1 on the
        black sidebar (--frame #000000), 1.60:1 inside a dialog (--bg #0A0A0A) and
-       1.35:1 on a pick menu (#2A1A12), all under the 3:1 that WCAG 1.4.11 asks of a
-       focus indicator. So the ring keeps --brand-deep here: #FFB27A in the dark theme,
+       1.35:1 on a pick menu (#1F1939), all under the 3:1 that WCAG 1.4.11 asks of a
+       focus indicator. So the ring keeps --brand-deep here: #C8BAFF in the dark theme,
        measured 11.9:1 on the black sidebar, 11.22:1 in a dialog and 9.48:1 on a pick
        menu. */
     .side a:focus-visible,

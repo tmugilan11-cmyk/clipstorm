@@ -7,7 +7,7 @@
 <meta name="description" content="Clipstorm clips Twitch, Kick and YouTube live streams while they're still live. AI finds the best moments and turns them into captioned vertical Shorts, Reels and TikToks. Free and open source.">
 <link rel="canonical" href="{{SITE}}/">
 <meta name="robots" content="index,follow,max-image-preview:large">
-<meta name="theme-color" content="#FF8B33">
+<meta name="theme-color" content="#AF9BFF">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Clipstorm">
 <meta property="og:url" content="{{SITE}}/">
@@ -27,7 +27,7 @@
 <script>document.documentElement.classList.add("js")</script>
 <script src="/assets/gradient-ascii.js" defer></script>
 <style>
-:root{--brand:#FF8B33;--brand-hi:#FF9A4C;--ink:#2A1A12;--soft:#FFF2E8;--line-b:#FFD9BC;--deep:#A9480A;
+:root{--brand:#AF9BFF;--brand-hi:#B8A7FF;--ink:#1F1939;--soft:#FFF2E8;--line-b:#E3DCFF;--deep:#6541F4;
   --frame:#1E1612;--frame-2:#2C221D;--frame-text:#F4EEEA;--frame-dim:#A99A91;
   --muted:#F7F4F1;--line:#EEE8E4;--line-2:#E1D9D3;--text:#211813;--dim:#6D6159;--faint:#A0948C;--good:#0F8A57;
   --r-lg:16px;--r:12px;--r-sm:8px;--ease:cubic-bezier(.2,.7,.2,1);color-scheme:light}
@@ -40,12 +40,12 @@ footer.site .fwrap{max-width:1160px;margin:0 auto;padding:0 24px}
 footer.site .fgrid{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:32px}
 footer.site .fbrand img{height:30px;display:block;margin-bottom:14px}
 footer.site .fbrand p{max-width:300px;line-height:1.6;margin:0 0 18px;color:#B9A597}
-footer.site .fbrand a.fcta{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:10px;background:#FF8B33;color:#2A1A12;font-weight:600;text-decoration:none;transition:background-color .15s ease}
-footer.site .fbrand a.fcta:hover{background:#FF9A4C}
+footer.site .fbrand a.fcta{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:10px;background:#AF9BFF;color:#1F1939;font-weight:600;text-decoration:none;transition:background-color .15s ease}
+footer.site .fbrand a.fcta:hover{background:#B8A7FF}
 footer.site h4{font-size:13px;font-weight:600;color:#fff;margin:4px 0 14px}
 footer.site ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
 footer.site ul a{color:#B9A597;text-decoration:none;transition:color .15s ease}
-footer.site ul a:hover{color:#FF8B33}
+footer.site ul a:hover{color:#AF9BFF}
 footer.site .fbottom{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:44px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);font-size:13px;color:#8C7B70}
 @media (max-width:760px){footer.site .fgrid{grid-template-columns:1fr 1fr}footer.site .fbrand{grid-column:1/-1}}
 body{margin:0;background:#fff;color:var(--text);font:16px/1.55 "Geist","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -171,7 +171,7 @@ h1 .hl{display:inline-block;background:var(--brand);color:var(--ink);padding:0 .
 .chips span.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .mock .go{height:44px;border-radius:var(--r);background:var(--brand);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600}
 .src{display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--r);background:var(--soft);margin-bottom:14px}
-.src i{width:44px;height:44px;border-radius:var(--r-sm);background:linear-gradient(150deg,#f2b36b,#c9652f 55%,#3d1f14);flex:none}
+.src i{width:44px;height:44px;border-radius:var(--r-sm);background:linear-gradient(150deg,#c4b7f9,#8670de 55%,#281d58);flex:none}
 .src b{display:block;font-weight:600;color:var(--ink)}.src span{font-size:12px;color:var(--dim)}
 .prog{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
 .prog div{display:flex;align-items:center;gap:10px;color:var(--faint)}
@@ -253,7 +253,7 @@ summary::-webkit-details-marker{display:none}
 summary::after{content:"+";color:var(--faint);font-weight:400;font-size:24px;line-height:1;transition:transform .25s var(--ease)}
 details[open] summary::after{transform:rotate(45deg)}
 details p{color:var(--dim);margin-top:12px;font-size:16px}
-.closing{text-align:center;background:radial-gradient(ellipse 70% 90% at 50% 100%,#FFEBDA 0%,#FFF8F2 55%,#fff 85%);border-top:1px solid var(--line)}
+.closing{text-align:center;background:radial-gradient(ellipse 70% 90% at 50% 100%,#F0ECFF 0%,#FFF8F2 55%,#fff 85%);border-top:1px solid var(--line)}
 .closing h2{margin:0 auto;max-width:720px}.closing .sub{margin:10px auto 24px}
 
 
@@ -401,7 +401,7 @@ details p{color:var(--dim);margin-top:12px;font-size:16px}
 const _y = document.getElementById("year"); if (_y) _y.textContent = new Date().getFullYear();
 const navEl = document.getElementById("nav");
 addEventListener("scroll", () => navEl.classList.toggle("stuck", scrollY > 4), {passive:true});
-const startAscii = () => { try { GradientASCII(document.getElementById("heroAscii"), {colors: ["#ffb27a", "#ffffff", "#ffd2ae", "#ffe0c2", "#fff1e6"], shape: "horizon", lightMode: true, cellSize: 16, density: 0.8, glyphOpacity: 0.26, gradientOpacity: 0.32, glow: 0.06, grain: 0.06, mouseInteraction: false, clickEffect: "none"}); } catch {} };
+const startAscii = () => { try { GradientASCII(document.getElementById("heroAscii"), {colors: ["#c8baff", "#ffffff", "#ded5ff", "#e7e2ff", "#fff1e6"], shape: "horizon", lightMode: true, cellSize: 16, density: 0.8, glyphOpacity: 0.26, gradientOpacity: 0.32, glow: 0.06, grain: 0.06, mouseInteraction: false, clickEffect: "none"}); } catch {} };
 window.GradientASCII ? startAscii() : addEventListener("load", startAscii, {once:true});
 try {
   const lz = new IntersectionObserver(es => es.forEach(e => { const v = e.target; if (e.isIntersecting) { v.preload = "auto"; v.play().catch(() => {}); } else v.pause(); }), {threshold:.4});

@@ -329,3 +329,11 @@ clips per hour" of 0 removes the hourly limit; `live.MAX_LIVE_CLIPS` still stops
 clips already found ("Stopped by you with N clips"). A stopped video is never resumed after a restart: `_load_file`
 finishes it and marks any unmade clip "Stopped before this clip was made" (re-make by hand). Live recordings keep
 their own Stop recording. Checked by `tests/test_stop_job.py`.
+
+**A sharp webcam needs a big source.** A streamer's webcam is a small box (about 430 x 295 at 1080p, 287 x 197 at
+720p) and the "streamer on top" layout blows it up to 1080 x 940. The upload box now defaults to 1080p (it said 720p)
+and offers 1440p: `media._video_format` asks YouTube for VP9 at 1081-1440 lines first (YouTube has no H.264 there; AV1
+is never taken, this ffmpeg decodes it very slowly), else the usual H.264 chain; `jobs.LIMITS["quality"]` is 360-1440.
+Measured on the owner's Speed stream: format 623 (2560x1440 VP9) for 1440, 299 (1080p H.264) for 1080. The webcam
+panel itself is cleaned before it is enlarged and sharpened after (`render.CAM_CLEAN` hqdn3d, `render.CAM_SHARP` cas)
+in both the stack and gameplay layouts. Live recordings stay at 1080p (their pieces are MPEG-TS).

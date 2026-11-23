@@ -104,11 +104,18 @@ def _ydl(opts):
 
 
 def _video_format(height):
-    # H.264 picture and AAC sound at up to `height` (the clips are 1080 wide, so nothing above 1080 is fetched), then
-    # anything at that height, then the best there is. `ba` is the best audio the site offers.
-    height = min(int(height), 1080)
-    return (f"bv*[height<={height}][vcodec^=avc1]+ba[acodec^=mp4a]/bv*[height<={height}][vcodec^=avc1]+ba[ext=m4a]/"
-            f"bv*[height<={height}]+ba/b[height<={height}]/b")
+    # H.264 picture and AAC sound at up to `height`, then anything at that height, then the best there is. `ba` is the
+    # best audio the site offers.
+    #
+    # 1440 exists for the webcam. A streamer's webcam is a small box (about 430 x 295 at 1080p) and the "streamer on
+    # top" layout blows it up to 1080 x 940, so the bigger the source, the sharper the face. YouTube offers 1440p only
+    # as VP9 (or AV1), so that is asked for first; AV1 is never taken, because this ffmpeg decodes it very slowly.
+    height = min(int(height), 1440)
+    big = (f"bv*[height>1080][height<={height}][vcodec^=vp09]+ba[acodec^=mp4a]/"
+           f"bv*[height>1080][height<={height}][vcodec^=vp09]+ba/") if height > 1080 else ""
+    height = min(height, 1080)
+    return (big + f"bv*[height<={height}][vcodec^=avc1]+ba[acodec^=mp4a]/bv*[height<={height}][vcodec^=avc1]+ba[ext=m4a]/"
+            f"bv*[height<={height}][vcodec!^=av01]+ba/bv*[height<={height}]+ba/b[height<={height}]/b")
 
 
 def _biggest(job_dir: Path, stem: str) -> Path:

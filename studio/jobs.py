@@ -114,7 +114,7 @@ DEFAULTS = {"max_clips": 6, "min_len": 15, "max_len": 60, "style": "bounce", "la
             "bg": "", "censor": False, "cleanup": False}
 
 
-LIMITS = {"max_clips": (0, 100), "min_len": (5, 120), "max_len": (10, 180), "quality": (360, 1080)}
+LIMITS = {"max_clips": (0, 100), "min_len": (5, 120), "max_len": (10, 180), "quality": (360, 1440)}
 
 # What can fill the frame behind a video that does not fill it. "" is the blurred copy of that video, which is the
 # look most shorts use; the flat colours are for people who want the picture to sit on black or white instead.

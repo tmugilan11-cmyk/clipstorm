@@ -370,6 +370,14 @@ PIP_W = 380            # how wide the facecam is in the 1080-wide frame
 PIP_MARGIN = 26
 
 
+# The webcam is a small box blown up two to four times. Enlarging it as it is also enlarges the stream's compression
+# noise, so it is cleaned lightly first (hqdn3d) and sharpened after (cas, contrast adaptive sharpening). Measured on the
+# owner's Speed stream: visibly crisper hair, eyes and logo edges, no halo. The biggest gain is still a bigger source:
+# the 1440p choice gives the webcam twice the pixels of 720p.
+CAM_CLEAN = "hqdn3d=1.5:1.5:3:3,"
+CAM_SHARP = "cas=0.5,"
+
+
 def _filter(layout, fg_h, facecam=None, bg="", keep=None, src_w=0, src_h=0, cam_cx=None, lead=None, length=None):
     """The picture. `bg` only matters when the video does not fill the frame: "" keeps the blurred copy of the video
     behind it, "black" or "white" paints that space a flat colour instead.
@@ -396,7 +404,7 @@ def _filter(layout, fg_h, facecam=None, bg="", keep=None, src_w=0, src_h=0, cam_
             pip_h = max(2, int(round(PIP_W * fh / fw)))
             return (head + f",split=2[base][fc];"
                     f"[base]scale={W}:{H}:force_original_aspect_ratio=increase:flags=lanczos,crop={W}:{H},setsar=1[b];"
-                    f"[fc]crop={fw}:{fh}:{fx}:{fy},scale={PIP_W}:{pip_h}:flags=lanczos,setsar=1[p];"
+                    f"[fc]crop={fw}:{fh}:{fx}:{fy},{CAM_CLEAN}scale={PIP_W}:{pip_h}:flags=lanczos,{CAM_SHARP}setsar=1[p];"
                     f"[b][p]overlay={W - PIP_W - PIP_MARGIN}:{PIP_MARGIN}[v0];")
     if layout == "stack" and facecam and len(facecam) == 4 and src_w and src_h:
         # The streamer above, the game below: one frame holds both, exactly the shape a phone plays. The game
@@ -426,8 +434,8 @@ def _filter(layout, fg_h, facecam=None, bg="", keep=None, src_w=0, src_h=0, cam_
                 else:
                     gx = mid
             if cam_cx is None:
-                camcrop = (f"crop={fw}:{fh}:{fx}:{fy},"
-                           f"scale={W}:{top}:force_original_aspect_ratio=increase:flags=lanczos,crop={W}:{top},setsar=1[cam];")
+                camcrop = (f"crop={fw}:{fh}:{fx}:{fy},{CAM_CLEAN}"
+                           f"scale={W}:{top}:force_original_aspect_ratio=increase:flags=lanczos,crop={W}:{top},{CAM_SHARP}setsar=1[cam];")
             else:
                 # The person is not always in the middle of their webcam picture. The panel shows a window of the
                 # right shape (1080:940) cut from the webcam, centred on the person and kept inside the picture.
@@ -437,8 +445,8 @@ def _filter(layout, fg_h, facecam=None, bg="", keep=None, src_w=0, src_h=0, cam_
                 cw, ch = max(2, cw - cw % 2), max(2, ch - ch % 2)
                 cx = fx + min(max(float(cam_cx) * fw - cw / 2, 0), fw - cw)
                 cy = fy + (fh - ch) / 2
-                camcrop = (f"crop={cw}:{ch}:{int(round(cx))}:{int(round(cy))},"
-                           f"scale={W}:{top}:flags=lanczos,setsar=1[cam];")
+                camcrop = (f"crop={cw}:{ch}:{int(round(cx))}:{int(round(cy))},{CAM_CLEAN}"
+                           f"scale={W}:{top}:flags=lanczos,{CAM_SHARP}setsar=1[cam];")
             return (head + f",split=2[cs][gs];"
                     f"[cs]" + camcrop +
                     f"[gs]crop={gw}:{gh}:{gx}:{gy},"

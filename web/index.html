@@ -2249,7 +2249,7 @@ function jobHtml(j) {
   const main = busy ? "" : best ? `<button class="btn sm primary" data-act="openclip" data-j="${j.id}" data-c="${esc(best.id)}" title="Opens the best clip. The rest are listed below it.">Open clips</button>` : "";
   const pic = j.thumb ? `<img src="/media/${esc(j.id)}/thumb.jpg" alt="" loading="lazy">` : ic(j.source?.type === "file" ? "film" : "link");
   return `<div class="job-head"><div class="jt"><span class="jthumb">${pic}${j.duration ? `<span class="du">${fmt(j.duration)}</span>` : ""}</span><div style="min-width:0"><h3>${esc(j.title || j.source.name)}</h3><p class="sub">${status} ${meta}</p></div></div>
-      <div class="row" style="flex-wrap:nowrap;gap:4px">${main}${busy ? "" : `
+      <div class="row" style="flex-wrap:nowrap;gap:4px">${main}${busy && !j.stop ? `<button class="btn sm danger" data-act="stopjob" data-j="${j.id}" title="Stop looking for more moments. The clips already found are still finished.">${ic("x")}Stop</button>` : ""}${busy && j.stop ? `<span class="pill">Stopping…</span>` : ""}${busy ? "" : `
         ${j.clips.length ? `<button class="btn sm ghost" data-act="copyall" data-j="${j.id}" title="Copy the post text of every clip of this video">${ic("copy")}Copy all post text</button>` : ""}
         ${j.clips.some(c => c.status === "done") ? `<button class="btn sm icon ghost" data-act="dlall" data-j="${j.id}" title="Download all clips of this video" aria-label="Download all clips of this video">${ic("down")}</button>` : ""}
         <button class="btn sm icon ghost" data-act="deljob" data-j="${j.id}" title="Delete" aria-label="Delete this video and its clips">${ic("trash")}</button>
@@ -3828,6 +3828,15 @@ document.addEventListener("click", async e => {
       if (!typed) return;
       await send("/api/account/delete", {confirm: typed});
       location.href = "/"; return;
+    }
+    if (a === "stopjob") {
+      // Stop a video that is waiting or being made. It stops looking for more moments after the part it is reading
+      // now; the clips already found are still finished, so nothing on the page disappears.
+      if (!await ask("Stop making clips from this video?", "It stops looking for more moments. The clips already found are still finished.", "Stop", true)) return;
+      b.disabled = true;
+      try { await send(`/api/jobs/${encodeURIComponent(d.j)}/stop`, {}); toast("Stopping. The clips already found are being finished.", "ok"); }
+      catch (err) { b.disabled = false; toast(err.message, "bad"); }
+      return tick();
     }
     if (a === "deljob") {
       if (!await ask("Delete this video?", "The video and all of its clips are permanently deleted. This cannot be undone.", "Delete", true)) return;

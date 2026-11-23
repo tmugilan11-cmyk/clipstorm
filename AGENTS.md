@@ -322,3 +322,10 @@ the catalogue's first row) is kept in `soundplan.py` for comparison: `docs/resea
 and keep every strong find up to `jobs.ALL_CLIPS` (100, the same cap as one live recording). A creator's "Most live
 clips per hour" of 0 removes the hourly limit; `live.MAX_LIVE_CLIPS` still stops one recording at 100. The score bar
 (`min_score`) still applies, so "all" means all the good ones. Checked by `tests/test_all_clips.py`.
+
+**A video being made can be stopped.** The Stop button on a waiting or running video calls
+`POST /api/jobs/{jid}/stop` -> `jobs.stop()`: a waiting one is never started; a running one sets `job["stop"]` and
+`_run_job` stops before the next part is judged, cancels the transcript it was writing ahead, and still finishes the
+clips already found ("Stopped by you with N clips"). A stopped video is never resumed after a restart: `_load_file`
+finishes it and marks any unmade clip "Stopped before this clip was made" (re-make by hand). Live recordings keep
+their own Stop recording. Checked by `tests/test_stop_job.py`.

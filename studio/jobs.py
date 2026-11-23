@@ -257,6 +257,15 @@ def _load_file(f: Path, uid: str):
         job["source_path"] = _remap(job["source_path"], f.parent)
     if job.get("source", {}).get("path"):
         job["source"]["path"] = _remap(job["source"]["path"], f.parent)
+    if job.get("status") in ("queued", "running") and job.get("kind") != "live" and job.get("stop"):
+        # Stop was pressed and the server went down before it finished: it is not started again. A clip that was
+        # still waiting says so and can be re-made by hand.
+        for c in job.get("clips", []):
+            if c.get("status") in ("queued", "rendering"):
+                c.update(status="error", error="Stopped before this clip was made. Press Re-make to make it.")
+        n = sum(1 for c in job.get("clips", []) if c.get("status") == "done")
+        job.update(status="done", progress=1.0, resume=False,
+                   stage=f"Stopped by you with {n} clip{'s' if n != 1 else ''}")
     if job.get("status") in ("queued", "running") and job.get("kind") != "live":
         # Picked up again as soon as the server is back (jobs.start), from the last finished part of the transcript.
         job.update(status="queued", stage="Picking up where it stopped", error=None, resume=True)
@@ -938,9 +947,30 @@ def _moment_labels(job, audio, a: int, b: int, found: list, notes: list) -> None
             c["moment_score"] = round(covered / max(1.0, end - start), 2)
 
 
+def stop(jid) -> dict:
+    """The person pressed Stop on a video that is waiting or being made.
+
+    A waiting video is simply not started. A running one stops looking for more moments at the next safe point
+    (before the next part is judged); the clips it has already found are still finished, so nothing the person can
+    already see is thrown away. Raises KeyError when the video is not theirs."""
+    job = get(jid)
+    if not job:
+        raise KeyError(jid)
+    if job.get("status") not in ("queued", "running"):
+        return {"ok": True, "status": job.get("status")}
+    if job.get("status") == "queued":
+        _set(job, stop=True, resume=False, status="done", progress=1.0,
+             stage="Stopped by you before it started" if not job.get("clips") else "Stopped by you")
+    else:
+        _set(job, stop=True, resume=False, stage="Stopping: finishing the part being read now")
+    return {"ok": True, "status": job.get("status")}
+
+
 def _run_job(job):
     import math
     from concurrent.futures import ThreadPoolExecutor
+    if job.get("stop"):                  # Stop was pressed while it was still waiting its turn
+        return
     d = Path(job["dir"])
     o = job["options"]
     src = job["source"]
@@ -1113,6 +1143,8 @@ def _run_job(job):
     except Exception:
         sig = {}
     for bi, (a, b) in enumerate(blocks):
+        if job.get("stop"):               # the person pressed Stop: no more parts are read
+            break
         if bi < done_blocks:
             continue                      # transcribed and checked by the AI before the restart
         shift = a / 16000
@@ -1130,6 +1162,8 @@ def _run_job(job):
              heard_to=round((b - lo) / 16000 + lo / 16000, 1), blocks_done=bi + 1)
         words += [dict(w, s=round(w["s"] + shift, 2), e=round(w["e"] + shift, 2)) for w in bw]
         (d / "words.json").write_text(json.dumps(words), encoding="utf-8")
+        if job.get("stop"):               # Stop was pressed while this part was being written: do not judge it
+            break
         _set(job, stage="Finding the best moments" + where, word_count=len(words))
         # 0 means "as many good clips as there are": every block is judged and every strong find is kept, up to
         # ALL_CLIPS so one very long video cannot flood the page.
@@ -1187,8 +1221,11 @@ def _run_job(job):
         job["ai"] = {"model": model, "tokens": tokens, "note": "", "log": notes[-5:]}
         job["done_blocks"] = bi + 1       # a restart from here on carries on with the next part
         save(job)
+    if job.get("stop"):
+        ahead.shutdown(wait=False, cancel_futures=True)     # the transcript of the next part is no longer needed
     if futures:
-        _set(job, stage="Finishing the clips", progress=max(job["progress"], 0.92))
+        _set(job, stage="Stopped by you: finishing the clips already found" if job.get("stop") else "Finishing the clips",
+             progress=max(job["progress"], 0.92))
     _wait_for_clips(job, futures, began, renders._max_workers)
     if exact:           # keep our own words for the clips in the saved transcript, so editing a clip later uses them
         for a_s, b_s, tw in exact.values():
@@ -1203,6 +1240,8 @@ def _run_job(job):
     job["ai"] = {"model": model, "tokens": tokens, "log": notes[-5:],
                  "note": "The AI was unavailable, so clips were picked by loudness only." if clips and not model else ""}
     stage = "Done" if clips else "Done, but nothing clip-worthy was found"
+    if job.get("stop"):
+        stage = f"Stopped by you with {len(clips)} clip{'s' if len(clips) != 1 else ''}"
     _set(job, status="done", stage=stage, progress=1.0, took=round(time.time() - t0))
     try:
         from . import notices

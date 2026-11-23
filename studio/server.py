@@ -1128,6 +1128,18 @@ def rerender(jid: str, cid: str, body: dict = Body(...)):
     return jobs.public(job)
 
 
+@app.post("/api/jobs/{jid}/stop")
+def stop_job(jid: str):
+    """Stop a video that is waiting or being made. The clips already found are still finished."""
+    _job_or_404(jid)
+    if jid in live.SESSIONS:
+        raise HTTPException(409, "This is a live recording. Use Stop recording on its page.")
+    try:
+        return jobs.stop(jid)
+    except KeyError:
+        raise HTTPException(404, "That video was not found")
+
+
 @app.delete("/api/jobs/{jid}")
 def delete_job(jid: str):
     job = _job_or_404(jid)

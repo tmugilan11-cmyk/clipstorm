@@ -383,3 +383,11 @@ is a wait on the network); `take()` adds their clips in the order of the video a
 parts whose earlier parts are done, so a restart never skips one. `judge_story.save` never writes a story that reaches
 less far than the one already kept, because a slower part finishes after a faster later one. Checked by
 `tests/test_judge_ahead.py`, which runs a 40-minute video through `_run_job` with a stand-in judge.
+
+**"Posted" through Zernio means Zernio published it.** `zernio.post` used to send no `mediaItems` and no
+`publishNow`, which Zernio saves as an empty draft; the first two clips sent that way (2026-11-23) never reached
+Instagram or YouTube while the page said "posted". Now the uploaded file goes in `mediaItems`, a post for now has
+`publishNow: true` (published inside the request, so it waits up to `PUBLISH_WAIT`), YouTube gets the clip's title
+in `platformSpecificData`, and a draft, a failure or a partial post with no link raises with the platform's reason.
+A post Zernio was still publishing gets its link (`platforms[].platformPostUrl`) or its failure from `zernio.status`
+on the next views pass. Checked by `tests/test_zernio_publish.py`.

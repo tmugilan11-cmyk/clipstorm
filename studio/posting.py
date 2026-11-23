@@ -145,9 +145,10 @@ def _post(p):
             from . import zernio
             media = zernio.upload(path)
             text = _ig_caption(clip, creator) if acc["platform"] == "instagram" else f"{title}\n\n{cap}"
-            got = zernio.post(media, text, [acc["id"]], timezone_name="UTC")
+            got = zernio.post(media, text, [acc["id"]], timezone_name="UTC", title=title)
             rid, url = got.get("id", ""), got.get("url", "")
             p["zernio_post"] = rid
+            p["zernio_status"] = got.get("status", "")
         elif acc["platform"] == "youtube":
             rid, url = accounts.youtube_upload(acc, path, title, cap + "\n\n#Shorts", clip.get("hashtags", []), creator["privacy"])
         elif acc["platform"] == "instagram":
@@ -209,6 +210,19 @@ def _stats_for(recent):
     if there:
         from . import zernio
         for p in there:
+            if not p.get("url"):
+                # Zernio may still have been publishing when it answered: fetch the link, or the failure
+                try:
+                    st = zernio.status(p["zernio_post"])
+                except Exception:  # noqa: BLE001
+                    st = {}
+                p["zernio_status"] = st.get("status", p.get("zernio_status", ""))
+                if st.get("url"):
+                    p["url"] = st["url"]
+                elif st.get("status") in ("failed", "cancelled", "draft"):
+                    p.update(status="failed", error=zernio._why_not(st))
+                    alerts.notify(f"post failed on {p['account_name']} ({p['title']}): {p['error'][:200]}", kind="post")
+                    continue
             try:
                 got = zernio.analytics(p["zernio_post"])
             except Exception:  # noqa: BLE001  - a number is nice to have, never worth a failed pass

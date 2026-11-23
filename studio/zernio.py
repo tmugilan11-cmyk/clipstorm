@@ -14,10 +14,14 @@ The four things that matter, in Zernio's own words:
 
   GET  /v1/accounts                          the accounts you connected, with their ids
   POST /v1/media/presign                     {filename, contentType} -> {uploadUrl, publicUrl}
-  POST /v1/posts                             {content, platforms:[{platform, accountId}], ...}
+  POST /v1/posts                             {content, mediaItems:[{type, url}], platforms:[...], publishNow}
   GET  /v1/posts/{id}                        the status of one post
 
 Uploading is two steps: ask for an upload address, PUT the file to it, then post the publicUrl.
+
+A post with no `mediaItems` and none of `publishNow` / `scheduledFor` is saved by Zernio as an empty
+draft and never reaches any platform. That is how the first clips sent through here ended up: Zernio
+said "draft", nothing was on Instagram or YouTube, and the page said "posted" (2026-11-23).
 """
 import json
 import os
@@ -151,8 +155,9 @@ def _call(method: str, path: str, key_override: Optional[str] = None, **kw) -> d
     url = base() + path
     head = {"Authorization": "Bearer " + k, "Accept": "application/json"}
     head.update(kw.pop("headers", {}) or {})
+    wait = kw.pop("timeout", TIMEOUT)
     try:
-        r = httpx.request(method, url, headers=head, timeout=TIMEOUT, **kw)
+        r = httpx.request(method, url, headers=head, timeout=wait, **kw)
     except httpx.HTTPError as e:
         raise ZernioError(f"Could not reach Zernio: {type(e).__name__}. Check this machine's internet "
                           f"connection, then try again.")
@@ -160,7 +165,7 @@ def _call(method: str, path: str, key_override: Optional[str] = None, **kw) -> d
 
 
 def _check(r: httpx.Response) -> dict:
-    if r.status_code in (200, 201, 202):
+    if r.status_code in (200, 201, 202, 207):   # 207: published on some platforms, not all
         try:
             got = r.json()
         except ValueError:
@@ -299,29 +304,68 @@ def upload(path: Path, key_override: Optional[str] = None) -> str:
     return public_url
 
 
+PUBLISH_WAIT = 600.0                # publishing now is done inside the request, and a video takes a while
+
+
 def post(media_url: str, caption: str, targets: list, when: Optional[str] = None,
-         timezone_name: str = "UTC", key_override: Optional[str] = None) -> dict:
+         timezone_name: str = "UTC", key_override: Optional[str] = None, title: str = "") -> dict:
     """Publish one clip to one or more Zernio accounts, now or at a time.
 
     targets is a list of our own account ids ("zernio:<id>"); when None is given the post is
     published as soon as Zernio takes it.
     """
+    if not str(media_url or "").startswith("http"):
+        raise ZernioError("The clip did not reach Zernio's storage, so there is nothing to post. Try again.")
     platforms = []
     for t in targets:
         aid = str(t)
         if not aid.startswith("zernio:"):
             raise ZernioError("That is not a Zernio account.")
-        platforms.append({"platform": _platform_of(aid, key_override), "accountId": aid.split(":", 1)[1]})
+        row = {"platform": _platform_of(aid, key_override), "accountId": aid.split(":", 1)[1]}
+        if row["platform"] == "youtube" and title:
+            # YouTube's video title; without it Zernio uses the caption's first line
+            row["platformSpecificData"] = {"title": str(title)[:100], "visibility": "public"}
+        platforms.append(row)
     if not platforms:
         raise ZernioError("Pick at least one Zernio account to post to.")
-    body = {"content": str(caption or "")[:2000], "platforms": platforms}
+    body = {"content": str(caption or "")[:2000], "platforms": platforms,
+            "mediaItems": [{"type": "video", "url": media_url}]}
     if when:
         body["scheduledFor"] = when
         body["timezone"] = timezone_name
-    got = _call("POST", "/posts", key_override=key_override, json=body)
+    else:
+        body["publishNow"] = True
+    got = _call("POST", "/posts", key_override=key_override, json=body,
+                timeout=TIMEOUT if when else PUBLISH_WAIT)
+    out = _read_post(got)
+    out["when"] = when or "now"
+    if out["status"] in ("failed", "cancelled", "draft") or (out["status"] == "partial" and not out["url"]):
+        raise ZernioError(_why_not(out))
+    return out
+
+
+def _read_post(got: dict, post_id: str = "") -> dict:
+    """The parts of Zernio's post that matter: its status, the link on the platform, and why it failed."""
     p = got.get("post") if isinstance(got.get("post"), dict) else got
-    return {"id": str(p.get("_id") or p.get("id") or ""), "status": str(p.get("status") or ""),
-            "url": str(p.get("url") or ""), "when": when or "now"}
+    rows = [r for r in (p.get("platforms") or []) if isinstance(r, dict)]
+    url = str(p.get("url") or "") or next((str(r["platformPostUrl"]) for r in rows if r.get("platformPostUrl")), "")
+    errs = [str(r.get("errorMessage") or r.get("error") or "") for r in rows if r.get("status") == "failed"]
+    out = {"id": str(p.get("_id") or p.get("id") or post_id), "status": str(p.get("status") or ""), "url": url,
+           "platforms": {str(r.get("platform") or ""): str(r.get("status") or "") for r in rows},
+           "media": len(p.get("mediaItems") or [])}
+    err = p.get("error") or next((e for e in errs if e), "")
+    if err:
+        out["error"] = str(err)[:300]
+    return out
+
+
+def _why_not(st: dict) -> str:
+    """One sentence for the page when Zernio did not publish a post."""
+    if st.get("error"):
+        return "Zernio could not publish it: " + st["error"]
+    if st["status"] == "draft":
+        return "Zernio kept it as a draft, so it was not published. Try again."
+    return f"Zernio says the post {st['status']}. Open Zernio to see why."
 
 
 def _platform_of(account_id: str, key_override: Optional[str] = None) -> str:
@@ -336,12 +380,7 @@ def _platform_of(account_id: str, key_override: Optional[str] = None) -> str:
 def status(post_id: str, key_override: Optional[str] = None) -> dict:
     """Where one post got to: scheduled, publishing, published or failed."""
     got = _call("GET", "/posts/" + str(post_id), key_override=key_override)
-    p = got.get("post") if isinstance(got.get("post"), dict) else got
-    out = {"id": str(p.get("_id") or p.get("id") or post_id),
-           "status": str(p.get("status") or ""), "url": str(p.get("url") or "")}
-    if p.get("error"):
-        out["error"] = str(p["error"])[:300]
-    return out
+    return _read_post(got, str(post_id))
 
 
 def analytics(post_id: str, key_override=None) -> dict:

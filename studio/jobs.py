@@ -108,12 +108,13 @@ _by_user: dict = {}                       # user -> {job id: job}: listing one p
 _lock = threading.RLock()
 on_clip_ready: list = []   # callbacks (job, clip), run once when a clip first finishes
 
+ALL_CLIPS = 100     # what "0 = as many as possible" stops at, the same cap one live recording has
 DEFAULTS = {"max_clips": 6, "min_len": 15, "max_len": 60, "style": "bounce", "layout": "blur", "quality": 1080,
             "range_start": None, "range_end": None, "captions": True, "format": None, "moment_labels": False,
             "bg": "", "censor": False, "cleanup": False}
 
 
-LIMITS = {"max_clips": (1, 20), "min_len": (5, 120), "max_len": (10, 180), "quality": (360, 1080)}
+LIMITS = {"max_clips": (0, 100), "min_len": (5, 120), "max_len": (10, 180), "quality": (360, 1080)}
 
 # What can fill the frame behind a video that does not fill it. "" is the blurred copy of that video, which is the
 # look most shorts use; the flat colours are for people who want the picture to sit on black or white instead.
@@ -1130,7 +1131,9 @@ def _run_job(job):
         words += [dict(w, s=round(w["s"] + shift, 2), e=round(w["e"] + shift, 2)) for w in bw]
         (d / "words.json").write_text(json.dumps(words), encoding="utf-8")
         _set(job, stage="Finding the best moments" + where, word_count=len(words))
-        left = int(o["max_clips"]) - len(job["clips"])
+        # 0 means "as many good clips as there are": every block is judged and every strong find is kept, up to
+        # ALL_CLIPS so one very long video cannot flood the page.
+        left = (int(o["max_clips"]) or ALL_CLIPS) - len(job["clips"])
         if left <= 0 or len(bw) < 8:
             job["done_blocks"] = bi + 1
             save(job)

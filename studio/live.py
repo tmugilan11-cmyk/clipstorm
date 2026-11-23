@@ -1116,7 +1116,8 @@ class Session:
         if len(self.job["clips"]) >= MAX_LIVE_CLIPS:
             self.skipped += 1
             return self._verdict(verdict, f"Skipped: this recording has made its {MAX_LIVE_CLIPS} clips")
-        if len(recent) >= st["live_per_hour"] and not must:
+        # 0 clips an hour means no hourly limit: only MAX_LIVE_CLIPS for the whole recording.
+        if st["live_per_hour"] and len(recent) >= st["live_per_hour"] and not must:
             self.skipped += 1
             return self._verdict(verdict, f"Skipped: {st['live_per_hour']} clips this hour already")
         usage.set_context(self.job["creator"], self.job["title"] or "Live stream")

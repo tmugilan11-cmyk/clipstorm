@@ -1712,7 +1712,7 @@ function drawAdd(variant) {
       <div class="ob wide"><div class="ot">How long should each clip be?</div>
         <div class="seg lens" role="group" aria-label="Clip length">${LENGTHS.map(([k, l, s]) => `<button type="button" data-len="${k}" aria-pressed="false">${l}<small>${s}</small></button>`).join("")}</div>
         <div class="nsteps" style="margin-top:10px">
-          ${stepper("o_max", "How many", c?.max_clips ?? 6, 1, 20, 1, "")}
+          ${stepper("o_max", "How many (0 = all)", c?.max_clips ?? 6, 0, 100, 1, "")}
           ${stepper("o_min", "Shortest", c?.min_len ?? 15, 5, 120, 5, "s")}
           ${stepper("o_maxlen", "Longest", c?.max_len ?? 60, 10, 180, 5, "s")}
         </div></div>
@@ -1771,7 +1771,7 @@ function sumOpts() {
   const out = $("#o_sum"); if (!out) return;
   const o = readOpts(), kinds = {"": "clips", waitforit: "Wait for it clips", reveal: "Reveal clips"};
   const st = S.status.styles?.[o.style], ly = LAYOUT_SHORT[o.layout] || S.status.layouts?.[o.layout] || o.layout;
-  out.textContent = `Up to ${o.max || 6} ${kinds[o.format] || "clips"}, ${o.min || 15} to ${o.maxlen || 60} seconds each. ${o.captions ? "Captions: " + (st || o.style) + "." : "No captions."} Layout: ${ly}. ${o.quality}p.`;
+  out.textContent = `${String(o.max) === "0" ? "As many good" : "Up to " + (o.max || 6)} ${kinds[o.format] || "clips"}, ${o.min || 15} to ${o.maxlen || 60} seconds each. ${o.captions ? "Captions: " + (st || o.style) + "." : "No captions."} Layout: ${ly}. ${o.quality}p.`;
   const m = LENGTHS.find(x => String(x[3]) === String(o.min) && String(x[4]) === String(o.maxlen));
   $$("[data-len]").forEach(b => b.setAttribute("aria-pressed", String(!!m && b.dataset.len === m[0])));
 }
@@ -2388,8 +2388,8 @@ function drawCreatorForm() {
         <label class="f span">What should it look for? (optional, in your own words)<input data-k="clip_focus" value="${esc(c.clip_focus || "")}" maxlength="300" placeholder="e.g. trolling other streamers, rage moments, anything about the aliens"><small class="sub" style="font-weight:400">The judge gives moments like these priority. Leave it empty and it looks for whatever people would stop scrolling for.</small></label>
         <label class="f">A clip must score at least<input data-k="min_score" type="number" min="0" max="100" value="${c.min_score}">${H("The bar a find has to reach to become a clip. 80 is a strong clip, 90 is one people will share. Lower it to get more clips, raise it to get fewer and better ones.")}</label>
         <label class="f">Make a clip when<select data-k="decide_mode">${opts({both:"It scores high enough AND someone really reacts", either:"It scores high enough (a great line with a calm delivery counts)"}, c.decide_mode)}</select>${H("Choose the first for exciting, loud moments only. Choose the second to also keep quiet funny or clever lines.")}</label>
-        <label class="f">Clips per video<input data-k="max_clips" type="number" value="${c.max_clips}">${H("The most clips made from one finished video. Only finds that reach the score count, so you may get fewer.")}</label>
-        <label class="f">Most live clips per hour<input data-k="live_per_hour" type="number" min="1" max="60" value="${c.live_per_hour}">${H("A safety limit while recording a live stream, so a busy hour cannot flood you. 6 to 10 is plenty.")}</label>
+        <label class="f">Clips per video<input data-k="max_clips" type="number" min="0" max="100" value="${c.max_clips}">${H("The most clips made from one finished video. 0 = as many good clips as it can find (up to 100). Only finds that reach the score count, so you may get fewer.")}</label>
+        <label class="f">Most live clips per hour<input data-k="live_per_hour" type="number" min="0" max="60" value="${c.live_per_hour}">${H("A safety limit while recording a live stream, so a busy hour cannot flood you. 0 = no hourly limit (one recording still stops at 100).")}</label>
         <label class="f">Check the live stream every<select data-k="ai_every_min">${opts({1:"1 minute", 2:"2 minutes", 3:"3 minutes", 5:"5 minutes", 10:"10 minutes"}, c.ai_every_min || 3)}</select><small class="fh" id="costhint">${costHint(c.ai_every_min)}</small></label>
       </div>
       <p class="help" style="margin:14px 0 0">On top of that, Clipstorm always looks straight away when the stream suddenly gets louder or chat gets busier, and when someone says "clip" or "clip it".</p>

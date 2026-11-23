@@ -317,3 +317,8 @@ line), two critics judge it, and a sound designer keeps at most `most_for(second
 `PEAKCUT_SOUND_WEB=0` and `PEAKCUT_SOUND_VISION=0` turn off the web and the frames. The old picker (a mood word, then
 the catalogue's first row) is kept in `soundplan.py` for comparison: `docs/research/meme-sound-v2.md`. Checked by
 `tests/test_sound_kb.py` and `tests/test_sound_pick.py`.
+
+**0 clips means all of them.** "How many" (`max_clips`) accepts 0 to 100; 0 makes `jobs._run_job` judge every block
+and keep every strong find up to `jobs.ALL_CLIPS` (100, the same cap as one live recording). A creator's "Most live
+clips per hour" of 0 removes the hourly limit; `live.MAX_LIVE_CLIPS` still stops one recording at 100. The score bar
+(`min_score`) still applies, so "all" means all the good ones. Checked by `tests/test_all_clips.py`.

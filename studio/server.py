@@ -1128,6 +1128,18 @@ def rerender(jid: str, cid: str, body: dict = Body(...)):
     return jobs.public(job)
 
 
+@app.post("/api/jobs/{jid}/carry-on")
+def carry_on_job(jid: str):
+    """A video that failed part-way carries on from the last part it finished, keeping its clips."""
+    _job_or_404(jid)
+    try:
+        return jobs.carry_on(jid)
+    except KeyError:
+        raise HTTPException(404, "That video was not found")
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+
+
 @app.post("/api/jobs/{jid}/stop")
 def stop_job(jid: str):
     """Stop a video that is waiting or being made. The clips already found are still finished."""

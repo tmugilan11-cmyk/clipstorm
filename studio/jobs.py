@@ -947,6 +947,50 @@ def _moment_labels(job, audio, a: int, b: int, found: list, notes: list) -> None
             c["moment_score"] = round(covered / max(1.0, end - start), 2)
 
 
+UNMADE = "The video stopped before this clip was made."
+HEAR_WAITS = (10, 30, 90)     # seconds before each new try of one part whose speech service hiccupped
+_PASSING = ("timed out", "timeout", "handshake", "connection", "temporarily", "reset by peer", "unreachable",
+            "502", "503", "504", "429", "ssl", "eof occurred", "remote end closed", "network")
+
+
+def _passing(err) -> bool:
+    """A network hiccup that is worth trying again (not a wrong key or a bad file)."""
+    text = str(err).lower()
+    return any(p in text for p in _PASSING)
+
+
+def _hear_patiently(audio, on_progress=None):
+    """One part of a video, heard. A speech service that times out once must not end a five-hour video: on the first
+    whole-stream run one SSL handshake timeout at part 28 of 35 stopped everything and left 21 found clips unmade. A
+    hiccup is tried again after 10, 30 and 90 seconds; anything else, or a fourth failure, is reported as before."""
+    for wait in HEAR_WAITS + (None,):
+        try:
+            return transcribe.transcribe(audio, on_progress)
+        except Exception as e:  # noqa: BLE001
+            if wait is None or not _passing(e):
+                raise
+            time.sleep(wait)
+
+
+def carry_on(jid) -> dict:
+    """A video that failed part-way (the speech service or the AI went down) carries on from the last part it
+    finished: the transcript, the clips and the AI answers it already has are kept, and the clips it had found but
+    not made yet are made. Raises KeyError when it is not theirs, ValueError when there is nothing to carry on from."""
+    job = get(jid)
+    if not job:
+        raise KeyError(jid)
+    if job.get("status") != "error" or job.get("kind") == "live":
+        raise ValueError("Only a video that stopped with an error can carry on.")
+    if not (Path(job["dir"]) / "words.json").is_file():
+        raise ValueError("It stopped before any of it was heard. Make it again instead.")
+    for c in job.get("clips", []):
+        if c.get("status") == "error" and c.get("error") == UNMADE:
+            c.update(status="queued", error=None)
+    _set(job, status="queued", stage="Carrying on from where it stopped", error=None, resume=True, stop=False)
+    _q.put(("job", jid, None), user=job["user"])
+    return {"ok": True}
+
+
 def stop(jid) -> dict:
     """The person pressed Stop on a video that is waiting or being made.
 
@@ -1133,7 +1177,7 @@ def _run_job(job):
                     heard_now = (a_ + p * (b_ - a_)) / 16000   # the second of the video being listened to
                     _set(job, progress=max(job["progress"], 0.14 + 0.78 * ((a_ - lo) + p * (b_ - a_)) / max(1, hi - lo)),
                          heard_to=round(heard_now, 1))
-            heard[i] = ahead.submit(ctx.bind(transcribe.transcribe), audio[a_:b_], tp)
+            heard[i] = ahead.submit(ctx.bind(_hear_patiently), audio[a_:b_], tp)
 
     # The ad breaks and static screens of the whole video, found once. It reads the video end to end,
     # so it is done here rather than for each clip, and only when asked for.
@@ -1282,7 +1326,7 @@ def _worker(quick_only=False):
             if kind == "job":
                 for c in job["clips"]:
                     if c.get("status") in ("queued", "rendering"):
-                        c.update(status="error", error="The video stopped before this clip was made.")
+                        c.update(status="error", error=UNMADE)
                 _set(job, status="error", error=safe.friendly(e), stage="Stopped")
                 creators.log(job["creator"], f"Video failed: {safe.friendly(e)[:200]}")
         finally:

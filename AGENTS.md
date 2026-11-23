@@ -337,3 +337,11 @@ is never taken, this ffmpeg decodes it very slowly), else the usual H.264 chain;
 Measured on the owner's Speed stream: format 623 (2560x1440 VP9) for 1440, 299 (1080p H.264) for 1080. The webcam
 panel itself is cleaned before it is enlarged and sharpened after (`render.CAM_CLEAN` hqdn3d, `render.CAM_SHARP` cas)
 in both the stack and gameplay layouts. Live recordings stay at 1080p (their pieces are MPEG-TS).
+
+**A network hiccup does not end a long video, and a failed video carries on.** `jobs._hear_patiently` hears each
+part of a video and tries a hiccup (`_passing`: timeouts, SSL handshakes, connection resets, 429/502/503/504) again
+after 10, 30 and 90 s; a wrong key or a bad file is reported at once as before. On the first whole-stream run one SSL
+handshake timeout at part 28 of 35 ended the video and left 21 found clips unmade. A video that still fails shows
+"Carry on from where it stopped" (`POST /api/jobs/{jid}/carry-on` -> `jobs.carry_on`): it is queued with `resume`, keeps
+its transcript, clips and AI answers, re-queues only the clips marked `jobs.UNMADE`, and goes on from `done_blocks`.
+Checked by `tests/test_carry_on.py`.

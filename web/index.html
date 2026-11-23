@@ -2257,7 +2257,7 @@ function jobHtml(j) {
         <label class="selck" title="Select this video and its clips"><input type="checkbox" data-sel="j:${j.id}" ${sel().has("j:" + j.id) ? "checked" : ""} aria-label="Select this video"></label>`}</div></div>
     ${busy ? `<div class="job-prog"><p class="jp-stage"><b>${esc(j.stage || (j.status === "queued" ? "Waiting its turn" : "Working"))}</b><span>${pct}%</span></p><div class="bar"><i style="width:${pct}%"></i></div>${heard ? `<p class="sub">${esc(heard.replace(/^ · /, ""))}</p>` : ""}</div>` : ""}
     ${j.status === "done" && !j.clips.length ? `<p class="sub">${esc(j.stage)}</p>` : ""}
-    ${j.error ? `<div class="err">${esc(j.error)}<button class="rep" data-act="report" data-ctx="${esc("Video failed: " + (j.title || j.source.name || "") + " | " + j.error)}">Report this</button></div>` : ""}${j.ai?.note ? `<p class="sub">${esc(j.ai.note)}</p>` : ""}
+    ${j.error ? `<div class="err">${esc(j.error)}${j.status === "error" && j.kind !== "live" && (j.blocks_done || 0) > 0 ? `<button class="btn sm primary" data-act="carryon" data-j="${j.id}" title="Keeps the clips and the transcript it already has, and goes on from the last part it finished" style="margin:0 8px">${ic("play")}Carry on from where it stopped</button>` : ""}<button class="rep" data-act="report" data-ctx="${esc("Video failed: " + (j.title || j.source.name || "") + " | " + j.error)}">Report this</button></div>` : ""}${j.ai?.note ? `<p class="sub">${esc(j.ai.note)}</p>` : ""}
     ${j.clips.length ? `<div class="grid">${byScore(j.clips).map(c => clipHtml(j, c)).join("")}</div>` : ""}`;
 }
 /* ---- selecting several videos and clips: delete or download them together */
@@ -3829,6 +3829,14 @@ document.addEventListener("click", async e => {
       if (!typed) return;
       await send("/api/account/delete", {confirm: typed});
       location.href = "/"; return;
+    }
+    if (a === "carryon") {
+      // A video that failed part-way goes on from the last part it finished. Its clips stay; the ones it had found
+      // but not made yet are made now.
+      b.disabled = true;
+      try { await send(`/api/jobs/${encodeURIComponent(d.j)}/carry-on`, {}); toast("Carrying on from where it stopped.", "ok"); }
+      catch (err) { b.disabled = false; toast(err.message, "bad"); }
+      return tick();
     }
     if (a === "stopjob") {
       // Stop a video that is waiting or being made. It stops looking for more moments after the part it is reading

@@ -1115,7 +1115,10 @@ def rerender(jid: str, cid: str, body: dict = Body(...)):
         raise HTTPException(404, "No such clip")
     if job["status"] in ("queued", "running") or clip.get("status") in ("queued", "rendering"):
         raise HTTPException(409, "This clip is still being made. Try again when it has finished.")
-    _throttle("render:" + ctx.uid(), 20, 600, "That's a lot of re-makes in a short time. Wait a few minutes.")
+    # On a shared site twenty re-makes in ten minutes is plenty for one person. On your own computer (sign-in off)
+    # the only one waiting is you, and re-making a whole stream's clips in another layout hit the limit at once.
+    _throttle("render:" + ctx.uid(), 20 if config.ACCOUNTS else 300, 600,
+              "That's a lot of re-makes in a short time. Wait a few minutes.")
     try:
         jobs.request_render(jid, cid, body)
     except (ValueError, TypeError) as e:

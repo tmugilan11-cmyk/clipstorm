@@ -59,7 +59,9 @@ def ask(prompt: str, purpose: str, timeout: float = 150.0, tally: Optional[Tally
     for attempt in range(max(1, tries)):
         for model in models:
             try:
-                out, sent, wrote = ai.call(model, prompt, None, timeout)
+                from .brain import think_for       # critics and the sign-off think briefly, the rest not at all
+                with ai.thinking(think_for(purpose)):
+                    out, sent, wrote = ai.call(model, prompt, None, timeout)
             except Exception as e:  # noqa: BLE001 - tried again below, then explained
                 last = e
                 continue

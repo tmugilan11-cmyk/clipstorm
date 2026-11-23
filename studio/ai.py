@@ -12,6 +12,7 @@ The others are told the schema in the prompt and asked for a JSON object, which 
 One picture can also be shown (`see`), which is how the webcam is looked for on a gaming stream. A model that
 cannot look at pictures answers with something else, and that is simply taken as "it did not look"."""
 import base64
+import contextlib
 import json
 import os
 import re
@@ -539,16 +540,42 @@ def _from_events(text: str) -> dict:
     return {"choices": [{"message": message}], "usage": usage}
 
 
+# How hard a thinking model thinks. A model that "thinks out loud" before it answers (DeepSeek, Qwen 3 and the like)
+# spent 94% of its output on thinking on this install: 76 s for an answer that took 6-14 s with thinking off. The
+# caller says how much a request deserves (`brain.ask_ai` decides from what the request is for): "off", "low", or
+# None for the model's own default. A service that refuses the setting is remembered and never sent it again.
+THINK = {"off": {"chat_template_kwargs": {"enable_thinking": False}, "thinking": {"type": "disabled"}},
+         "low": {"reasoning_effort": "low"}}
+_think = threading.local()
+_think_refused: set = set()
+
+
+@contextlib.contextmanager
+def thinking(level):
+    """Every OpenAI-format request made inside this block asks the model to think `level` ("off", "low" or None)."""
+    before = getattr(_think, "level", None)
+    _think.level = level if os.environ.get("PEAKCUT_AI_THINK", "auto") != "full" else None
+    try:
+        yield
+    finally:
+        _think.level = before
+
+
 def _openai(model, prompt, schema, timeout=None):
     headers = {"Authorization": f"Bearer {key()}"} if key() else {}
     body = {"model": model, "messages": [{"role": "user", "content": _wrapped(prompt, schema)}], "stream": False}
     # Most services accept these two extras; a few models refuse one of them, so they are dropped on a refusal.
     extras = [{"temperature": 0.4, "response_format": {"type": "json_object"}}, {"response_format": {"type": "json_object"}}, {}]
+    think = THINK.get(getattr(_think, "level", None) or "")
+    if think and (base_url(), model) not in _think_refused:
+        extras = [{**extras[0], **think}] + extras
     r = None
-    for extra in extras:
+    for i, extra in enumerate(extras):
         r = httpx.post(f"{base_url()}/chat/completions", json={**body, **extra}, headers=headers, timeout=timeout or 180)
         if r.status_code not in (400, 422):
             break
+        if i == 0 and think and any(k in extra for k in think):
+            _think_refused.add((base_url(), model))     # this service does not take the setting: never send it again
     if r.status_code != 200:
         _fail(r, model)
     data = _openai_body(r)

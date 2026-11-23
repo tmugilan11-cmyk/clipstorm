@@ -358,3 +358,11 @@ whole story read before the first part is judged; a longer one moves the story o
 (`judge_story.advance`). The read-ahead of the owner's 5 h 45 min stream was 36 answers of about 4,000 words each,
 two at a time on that service, and no clip appeared for over 40 minutes. The whole-video read itself is a pool of 10
 (`judge_story.WORKERS`), not batches that wait for their slowest answer.
+
+**A thinking model is told how hard to think.** Models that "think out loud" before answering (DeepSeek, Qwen 3)
+spent 94% of their output on thinking here: 76 s for a scout-sized answer that took 6-14 s with thinking off.
+`brain.think_for(purpose)` decides: the critics, the showrunner, the sound sign-off and designer, and the settings
+round think briefly (`reasoning_effort: low`); everything else (story, reader, scouts, hooks, captions) not at all
+(`chat_template_kwargs.enable_thinking=false`, `thinking.type=disabled`). `ai.thinking(level)` carries it to
+`ai._openai`; a service that answers 400/422 to it is remembered in `ai._think_refused` and never sent it again.
+`PEAKCUT_AI_THINK=full` turns it off. Checked by `tests/test_thinking.py`.

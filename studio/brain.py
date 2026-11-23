@@ -183,6 +183,18 @@ def loud_zscore(db):
     return (db - np.median(db)) / (db.std() + 1e-6)
 
 
+# Which requests deserve a thinking model's thinking. The critics, the final desk and the sign-offs decide what is
+# posted, so they think briefly; everything else (the story, the reader, the scouts, hooks, captions) already writes
+# its reasons into its answer and does not need to think first. Measured on deepseek-v4.1-flash: 76 s thinking in
+# full, 26 s thinking briefly, 6-14 s not thinking, for the same scout-sized question.
+_THINK_LOW = ("critic", "showrunner", "sign-off", "designer", "improving the settings")
+
+
+def think_for(purpose: str):
+    p = (purpose or "").lower()
+    return "low" if any(k in p for k in _THINK_LOW) else "off"
+
+
 def ask_ai(prompt, schema=None, purpose="AI call", timeout=None):
     """Try each model in order, with a couple of retries for rate limits and overloads.
     Returns (the answer, the model that gave it, tokens used) and notes the tokens in the usage record."""
@@ -192,7 +204,8 @@ def ask_ai(prompt, schema=None, purpose="AI call", timeout=None):
     for model in ai.models():
         for attempt in range(3):
             try:
-                out, sent, wrote = ai.call(model, prompt, schema or SCHEMA, timeout)
+                with ai.thinking(think_for(purpose)):
+                    out, sent, wrote = ai.call(model, prompt, schema or SCHEMA, timeout)
                 usage.record(sent, wrote, purpose)
                 ai.clear_problem()
                 return out, model, sent + wrote

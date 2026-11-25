@@ -5,10 +5,11 @@ $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 function Say($t) { Write-Host ""; Write-Host "== $t" -ForegroundColor Yellow }
 function Have($name) { return [bool](Get-Command $name -ErrorAction SilentlyContinue) }
-function Winget($id, $what) {
-    if (-not (Have "winget")) { throw "$what is missing and winget is not available. Install $what by hand, then run setup again." }
+# Named Get-Missing, not Winget: a function called Winget is what "winget install" ran, so it called itself forever.
+function Get-Missing($id, $what) {
+    if (-not (Have "winget.exe")) { throw "$what is missing and winget is not available. Install $what by hand, then run setup again." }
     Say "Installing $what (this can take a few minutes)"
-    winget install --id $id -e --accept-source-agreements --accept-package-agreements --silent
+    winget.exe install --id $id -e --accept-source-agreements --accept-package-agreements --silent
     $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [Environment]::GetEnvironmentVariable("Path", "User")
 }
 
@@ -21,19 +22,23 @@ if ($free -lt 15) { Write-Host "Less than 15 GB free: a long live recording need
 if ($PSScriptRoot.Length -gt 100) { Write-Host "This folder path is long. Windows cannot open paths over 260 characters; C:\clipstorm is safer." -ForegroundColor Red }
 
 # ---- Python 3.10 to 3.13 (the speech library has no build for newer ones yet)
+# The checks go through cmd so a missing version is just a "no": in Windows PowerShell, a message a program writes
+# to its error stream stops the whole script while errors are set to stop ("py.exe : No suitable Python runtime
+# found" ended setup on a PC that has 3.11, 3.13 and 3.15, because 3.12 was asked for first). A version that is
+# listed but broken (its files deleted) also answers "no", and the plain `python` is tried after.
 $py = $null
 foreach ($v in "3.12", "3.13", "3.11", "3.10") {
-    if (Have "py") { & py "-$v" -c "print(1)" 2>$null | Out-Null; if ($LASTEXITCODE -eq 0) { $py = @("py", "-$v"); break } }
+    if (Have "py") { cmd /c "py -$v -c ""print(1)"" >nul 2>nul"; if ($LASTEXITCODE -eq 0) { $py = @("py", "-$v"); break } }
 }
 if (-not $py -and (Have "python")) {
-    $ok = & python -c "import sys; print(int((3,10) <= sys.version_info[:2]))" 2>$null
+    $ok = cmd /c "python -c ""import sys; print(int((3,10) <= sys.version_info[:2]))"" 2>nul"
     if ($ok -eq "1") { $py = @("python") }
 }
-if (-not $py) { Winget "Python.Python.3.12" "Python 3.12"; $py = @("py", "-3.12") }
+if (-not $py) { Get-Missing "Python.Python.3.12" "Python 3.12"; $py = @("py", "-3.12") }
 Write-Host ("Python: " + (& $py[0] $py[1..9] --version))
 
 # ---- ffmpeg (cuts, renders and records)
-if (-not (Have "ffmpeg")) { Winget "Gyan.FFmpeg" "ffmpeg" }
+if (-not (Have "ffmpeg")) { Get-Missing "Gyan.FFmpeg" "ffmpeg" }
 if (-not (Have "ffmpeg")) { throw "ffmpeg was installed but this window cannot see it yet. Close this window and run setup.bat once more." }
 Write-Host ("ffmpeg: " + ((& ffmpeg -version | Select-Object -First 1)))
 
